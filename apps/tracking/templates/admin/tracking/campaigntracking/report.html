@@ -1,0 +1,537 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}{{ campaign.name }} — Report{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Home</a>
+  &rsaquo; <a href="{% url 'admin:tracking_campaigntracking_changelist' %}">Campaign Dashboards</a>
+  &rsaquo; <a href="{% url 'admin:tracking_campaigntracking_change' campaign.pk %}">{{ campaign.name }}</a>
+  &rsaquo; Report
+</div>
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+/* ── Layout ─────────────────────────────────────────────────────────────── */
+.dash-layout { display: flex; gap: 0; }
+.dash-sidebar {
+  width: 180px; min-width: 180px; flex-shrink: 0;
+  border-right: 1px solid var(--hairline-color);
+  padding-right: 20px; margin-right: 28px;
+}
+.dash-sidebar .sb-title {
+  font-weight: 700; font-size: 13px; line-height: 1.4;
+  padding-bottom: 12px; margin-bottom: 12px;
+  border-bottom: 1px solid var(--hairline-color); color: var(--body-fg); word-break: break-word;
+}
+.dash-sidebar ul { list-style: none; margin: 0; padding: 0; }
+.dash-sidebar ul li a {
+  display: block; padding: 7px 10px; border-radius: 3px;
+  font-size: 13px; color: var(--body-fg); text-decoration: none; margin-bottom: 2px;
+}
+.dash-sidebar ul li a:hover { background: var(--darkened-bg); }
+.dash-sidebar ul li.active a { background: var(--selected-bg); color: var(--link-fg); font-weight: 600; }
+.dash-sidebar .sb-back { display: block; margin-top: 20px; font-size: 12px; color: var(--body-quiet-color); text-decoration: none; }
+.dash-sidebar .sb-back:hover { color: var(--link-fg); }
+.dash-main { flex: 1; min-width: 0; }
+
+/* ── Form ───────────────────────────────────────────────────────────────── */
+.report-form {
+  background: var(--darkened-bg); border: 1px solid var(--hairline-color);
+  border-radius: 4px; padding: 20px; max-width: 560px;
+}
+.report-form label {
+  display: flex; align-items: flex-start; gap: 8px;
+  font-size: 13px; margin-bottom: 8px; cursor: pointer; color: var(--body-fg);
+}
+.report-form label input[type=checkbox] { margin-top: 2px; flex-shrink: 0; }
+.report-form textarea {
+  width: 100%; box-sizing: border-box; font-size: 13px; padding: 8px;
+  border: 1px solid var(--border-color); border-radius: 3px; resize: vertical;
+  background: var(--body-bg); color: var(--body-fg);
+}
+.report-form .gen-btn {
+  background: var(--button-bg); color: var(--button-fg);
+  border: none; padding: 8px 18px; border-radius: 3px;
+  font-size: 13px; cursor: pointer; margin-top: 14px;
+}
+.report-form .gen-btn:hover { background: var(--button-hover-bg); }
+.report-form .divider { border: none; border-top: 1px solid var(--hairline-color); margin: 12px 0; }
+.report-form .form-label { font-size: 12px; font-weight: 600; color: var(--body-fg); margin: 0 0 6px; }
+.form-indent { padding-left: 18px; }
+
+/* ── Generated report ────────────────────────────────────────────────────── */
+.report-output { margin-top: 32px; }
+.print-btn {
+  background: var(--close-button-bg); color: #fff;
+  border: none; padding: 7px 16px; border-radius: 3px;
+  font-size: 13px; cursor: pointer; margin-bottom: 20px;
+}
+.print-btn:hover { background: var(--close-button-hover-bg); }
+
+.rpt-header { border-bottom: 2px solid var(--body-fg); padding-bottom: 10px; margin-bottom: 20px; }
+.rpt-header h2 { margin: 0 0 6px; font-size: 18px; color: var(--body-fg); }
+.rpt-header .rpt-meta { font-size: 12px; color: var(--body-quiet-color); line-height: 1.7; }
+
+.rpt-section { margin-bottom: 28px; }
+.rpt-section h3 {
+  font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
+  color: var(--body-quiet-color); border-bottom: 1px solid var(--hairline-color);
+  padding-bottom: 6px; margin-bottom: 12px;
+}
+
+/* Stats bar */
+.rpt-stats { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 6px; }
+.rpt-stat { text-align: center; }
+.rpt-stat .rs-n { font-size: 22px; font-weight: 700; }
+.rpt-stat .rs-l { font-size: 11px; color: var(--body-quiet-color); }
+
+/* Insights */
+.insights-list { list-style: none; margin: 0; padding: 0; }
+.insights-list li {
+  padding: 7px 12px; margin-bottom: 6px;
+  background: var(--darkened-bg); border-left: 3px solid var(--primary);
+  border-radius: 0 3px 3px 0; font-size: 13px; color: var(--body-fg);
+}
+.insights-list li.benchmark {
+  border-left-color: #8764b8; font-style: italic; color: var(--body-quiet-color);
+}
+
+/* Funnel */
+.funnel-row { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; font-size: 13px; color: var(--body-fg); }
+.funnel-row .fl { width: 120px; flex-shrink: 0; }
+.funnel-row .fb { flex: 1; height: 16px; background: var(--hairline-color); border-radius: 2px; position: relative; overflow: hidden; }
+.funnel-row .fb-fill { position: absolute; top: 0; left: 0; height: 100%; border-radius: 2px; }
+.funnel-row .fv { width: 80px; flex-shrink: 0; font-size: 12px; color: var(--body-quiet-color); }
+
+/* Tables */
+table.rpt-log { width: 100%; border-collapse: collapse; font-size: 12px; }
+table.rpt-log th { background: var(--darkened-bg); border: 1px solid var(--border-color); padding: 5px 8px; text-align: left; color: var(--body-fg); }
+table.rpt-log td { border: 1px solid var(--hairline-color); padding: 4px 8px; color: var(--body-fg); }
+
+table.rpt-dept { width: 100%; border-collapse: collapse; font-size: 12px; }
+table.rpt-dept th { background: var(--darkened-bg); border: 1px solid var(--border-color); padding: 5px 8px; text-align: left; color: var(--body-fg); white-space: nowrap; }
+table.rpt-dept td { border: 1px solid var(--hairline-color); padding: 4px 8px; color: var(--body-fg); }
+table.rpt-dept .pct-cell { text-align: right; font-weight: 600; }
+
+/* Notes */
+.notes-box {
+  background: var(--darkened-bg); border: 1px solid var(--hairline-color);
+  padding: 12px; font-size: 13px; white-space: pre-wrap; border-radius: 3px; color: var(--body-fg);
+}
+
+/* Print */
+@media print {
+  .dash-sidebar, .report-form, .print-btn, #header, .breadcrumbs, #nav-sidebar { display: none !important; }
+  .dash-layout { display: block; }
+  .dash-main { width: 100%; }
+  .report-output { margin-top: 0; }
+  .insights-list li { border-left: 3px solid #555; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dash-layout">
+
+  <aside class="dash-sidebar">
+    <div class="sb-title">{{ campaign.name }}</div>
+    <ul>
+      <li><a href="{% url 'admin:tracking_campaigntracking_change' campaign.pk %}">Overview</a></li>
+      <li><a href="{% url 'admin:tracking_campaigntracking_interactions' campaign.pk %}">Interactions</a></li>
+      <li class="active"><a href="{% url 'admin:tracking_campaigntracking_report' campaign.pk %}">Report</a></li>
+    </ul>
+    <a class="sb-back" href="{% url 'admin:tracking_campaigntracking_changelist' %}">&larr; All campaigns</a>
+  </aside>
+
+  <div class="dash-main">
+    <h1 style="margin-top:0">Generate Report</h1>
+
+    <div class="report-form">
+      <form method="post">
+        {% csrf_token %}
+        <p class="form-label">Sections to include:</p>
+
+        <label>
+          <input type="checkbox" name="include_funnel"
+            {% if report and report.include_funnel %}checked{% elif not report %}checked{% endif %}>
+          Conversion funnel (rates per stage)
+        </label>
+        <label>
+          <input type="checkbox" name="include_dept"
+            {% if report and report.include_dept %}checked{% elif not report %}checked{% endif %}>
+          Department breakdown table
+        </label>
+        <label>
+          <input type="checkbox" name="include_targets"
+            {% if report and report.include_targets %}checked{% endif %}>
+          Per-target list (who clicked / submitted)
+        </label>
+        <label>
+          <input type="checkbox" name="include_log"
+            {% if report and report.include_log %}checked{% endif %}>
+          Full interaction log
+        </label>
+
+        <hr class="divider">
+        <p class="form-label">Charts (render in browser &amp; print):</p>
+        <div class="form-indent">
+          <label>
+            <input type="checkbox" name="include_timeline"
+              {% if report and report.include_timeline %}checked{% elif not report %}checked{% endif %}>
+            Events over time (timeline)
+          </label>
+          <label>
+            <input type="checkbox" name="include_dept_chart"
+              {% if report and report.include_dept_chart %}checked{% elif not report %}checked{% endif %}>
+            Department click-rate chart
+          </label>
+          <label>
+            <input type="checkbox" name="include_ttc_chart"
+              {% if report and report.include_ttc_chart %}checked{% elif not report %}checked{% endif %}>
+            Time-to-click histogram
+          </label>
+        </div>
+
+        <hr class="divider">
+        <p class="form-label">Filters:</p>
+        <label>
+          <input type="checkbox" name="exclude_scanners"
+            {% if report and report.exclude_scanners %}checked{% elif not report %}checked{% endif %}>
+          Exclude known scanner/bot interactions
+          <span style="font-size:11px;color:var(--body-quiet-color)">(SafeLinks, msnbot, etc.)</span>
+        </label>
+
+        <hr class="divider">
+        <p class="form-label" style="margin-bottom:6px">Custom notes (optional):</p>
+        <textarea name="notes" rows="4"
+          placeholder="Add observations, context, or follow-up actions…">{% if report %}{{ report.notes }}{% endif %}</textarea>
+
+        <br>
+        <button type="submit" class="gen-btn">Generate Report</button>
+      </form>
+    </div>
+
+    {# ── Generated report ───────────────────────────────────────────────────── #}
+    {% if report %}
+    <div class="report-output">
+      <button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
+
+      {# Header #}
+      <div class="rpt-header">
+        <h2>Phishing Simulation Report &mdash; {{ campaign.name }}</h2>
+        <div class="rpt-meta">
+          <b>Template:</b> {{ campaign.template }}
+          &middot; <b>Status:</b> {{ campaign.get_status_display }}
+          &middot; <b>Target scope:</b> {{ campaign.get_target_type_display }}
+          &middot; <b>Targets sent to:</b> {{ sent_count }}
+          {% if first_sent %}<br><b>First sent:</b> {{ first_sent|date:"Y-m-d H:i" }}{% endif %}
+          {% if campaign.finish_date %} &middot; <b>Finished:</b> {{ campaign.finish_date|date:"Y-m-d H:i" }}{% endif %}
+          {% if campaign.approved_by %}<br><b>Approved by:</b> {{ campaign.approved_by.email }}{% endif %}
+          {% if campaign.description %}<br><b>Description:</b> {{ campaign.description }}{% endif %}
+          <br><b>Report generated:</b> {{ report.generated_at|date:"Y-m-d H:i" }}
+          &middot; <b>Generated by:</b> {{ report.generated_by }}
+          {% if report.exclude_scanners %} &middot; <em>Scanner interactions excluded</em>{% endif %}
+        </div>
+      </div>
+
+      {# Key findings #}
+      <div class="rpt-section">
+        <h3>Key findings</h3>
+        {% if report.insights %}
+        <ul class="insights-list">
+          {% for insight in report.insights %}
+          <li {% if 'benchmark' in insight|lower or 'industry' in insight|lower %}class="benchmark"{% endif %}>
+            {{ insight }}
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+
+        <div class="rpt-stats" style="margin-top:14px">
+          {% with o=counts.opened|default:0 c=counts.clicked|default:0 s=counts.submitted|default:0 m=counts.mfa_submitted|default:0 r=counts.reported|default:0 %}
+          <div class="rpt-stat">
+            <div class="rs-n">{{ sent_count }}</div>
+            <div class="rs-l">Sent</div>
+          </div>
+          <div class="rpt-stat">
+            <div class="rs-n" style="color:#8a8886">{{ report.ignored_count }}</div>
+            <div class="rs-l">Ignored</div>
+          </div>
+          <div class="rpt-stat">
+            <div class="rs-n" style="color:#0078d4">{{ o }}</div>
+            <div class="rs-l">Opened</div>
+          </div>
+          <div class="rpt-stat">
+            <div class="rs-n" style="color:#ff8c00">{{ c }}</div>
+            <div class="rs-l">Clicked</div>
+          </div>
+          <div class="rpt-stat">
+            <div class="rs-n" style="color:#d13438">{{ s }}</div>
+            <div class="rs-l">Submitted</div>
+          </div>
+          {% if m %}
+          <div class="rpt-stat">
+            <div class="rs-n" style="color:#a4262c">{{ m }}</div>
+            <div class="rs-l">MFA subm.</div>
+          </div>
+          {% endif %}
+          <div class="rpt-stat">
+            <div class="rs-n" style="color:#107c10">{{ r }}</div>
+            <div class="rs-l">Reported</div>
+          </div>
+          {% endwith %}
+        </div>
+      </div>
+
+      {# Timeline chart #}
+      {% if report.include_timeline and report.timeline_json != 'null' %}
+      <div class="rpt-section">
+        <h3>Events over time</h3>
+        <canvas id="rptTimeline" height="80"></canvas>
+      </div>
+      {% endif %}
+
+      {# Funnel #}
+      {% if report.include_funnel %}
+      <div class="rpt-section">
+        <h3>Conversion funnel</h3>
+        {% for row in report.funnel %}
+        <div class="funnel-row">
+          <span class="fl">{{ row.label }}</span>
+          <span class="fb">
+            <span class="fb-fill" style="width:{{ row.pct }}%;background:{% if row.label == 'Sent' %}#b0c4de{% elif row.label == 'Opened' %}#0078d4{% elif row.label == 'Clicked' %}#ff8c00{% elif row.label == 'Submitted' %}#d13438{% elif row.label == 'MFA Submitted' %}#a4262c{% else %}#107c10{% endif %}"></span>
+          </span>
+          <span class="fv">{{ row.n }} ({{ row.pct }}%)</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {# Department chart #}
+      {% if report.include_dept_chart and report.dept_json != 'null' %}
+      <div class="rpt-section">
+        <h3>Click rate by department</h3>
+        <canvas id="rptDeptChart" height="100"></canvas>
+      </div>
+      {% endif %}
+
+      {# TTC chart #}
+      {% if report.include_ttc_chart and report.ttc_json != 'null' %}
+      <div class="rpt-section">
+        <h3>Time to first click</h3>
+        <canvas id="rptTtcChart" height="80"></canvas>
+      </div>
+      {% endif %}
+
+      {# Department table #}
+      {% if report.include_dept and report.dept_data %}
+      <div class="rpt-section">
+        <h3>Department breakdown</h3>
+        <table class="rpt-dept">
+          <thead>
+            <tr>
+              <th>Department</th>
+              <th>Sent</th>
+              <th>Clicked</th>
+              <th>Submitted</th>
+              <th>Reported</th>
+              <th>Click %</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for d in report.dept_data %}
+            <tr>
+              <td>{{ d.dept }}</td>
+              <td style="text-align:right">{{ d.sent }}</td>
+              <td style="text-align:right;color:#ff8c00">{{ d.clicked }}</td>
+              <td style="text-align:right;color:#d13438">{{ d.submitted }}</td>
+              <td style="text-align:right;color:#107c10">{{ d.reported }}</td>
+              <td class="pct-cell" style="color:{% if d.click_pct >= 50 %}#d13438{% elif d.click_pct >= 20 %}#ff8c00{% else %}#107c10{% endif %}">
+                {{ d.click_pct }}%
+              </td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+
+      {# Per-target list #}
+      {% if report.include_targets and report.risky_users %}
+      <div class="rpt-section">
+        <h3>Recipients who clicked or submitted ({{ report.risky_users|length }})</h3>
+        <table class="rpt-log">
+          <thead>
+            <tr>
+              <th>Name / Email</th>
+              <th>Department</th>
+              <th>Clicked</th>
+              <th>Submitted</th>
+              <th>Reported</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for u in report.risky_users %}
+            <tr>
+              <td>{{ u.name }}<br><span style="font-size:10px;color:var(--body-quiet-color)">{{ u.email }}</span></td>
+              <td>{{ u.dept }}</td>
+              <td style="text-align:center;color:{% if u.clicked %}#ff8c00{% else %}var(--body-quiet-color){% endif %}">{% if u.clicked %}✕{% else %}–{% endif %}</td>
+              <td style="text-align:center;color:{% if u.submitted %}#d13438{% else %}var(--body-quiet-color){% endif %}">{% if u.submitted %}✕{% else %}–{% endif %}</td>
+              <td style="text-align:center;color:{% if u.reported %}#107c10{% else %}var(--body-quiet-color){% endif %}">{% if u.reported %}✓{% else %}–{% endif %}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+
+      {# Notes #}
+      {% if report.notes %}
+      <div class="rpt-section">
+        <h3>Notes</h3>
+        <div class="notes-box">{{ report.notes }}</div>
+      </div>
+      {% endif %}
+
+      {# Interaction log #}
+      {% if report.include_log %}
+      <div class="rpt-section">
+        <h3>Interaction log ({{ report.interactions|length }} events)</h3>
+        {% if report.interactions %}
+        <table class="rpt-log">
+          <thead>
+            <tr>
+              <th>Time (local)</th><th>Target</th><th>Event</th>
+              <th>&Delta; time</th><th>IP address</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for i in report.interactions %}
+            <tr>
+              <td style="white-space:nowrap">{{ i.event_timestamp|date:"Y-m-d H:i:s" }}</td>
+              <td>{{ i.campaign_target.target.full_name }}<br>
+                <span style="font-size:10px;color:var(--body-quiet-color)">{{ i.campaign_target.target.email }}</span>
+              </td>
+              <td>{{ i.get_event_type_display }}</td>
+              <td style="white-space:nowrap">
+                {% if i.delta_seconds is not None %}
+                  {% if i.delta_seconds < 60 %}{{ i.delta_seconds }}s
+                  {% else %}{{ i.delta_minutes }}m {{ i.delta_remainder }}s{% endif %}
+                  ({{ i.delta_source }})
+                {% else %}—{% endif %}
+              </td>
+              <td>{{ i.ip_address|default:"—" }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <p style="color:var(--body-quiet-color);font-size:13px">No interactions recorded.</p>
+        {% endif %}
+      </div>
+      {% endif %}
+
+    </div>{# /report-output #}
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+    (function(){
+      var cs   = getComputedStyle(document.documentElement);
+      var fg   = (cs.getPropertyValue('--body-fg') || '#333').trim();
+      var grid = (cs.getPropertyValue('--hairline-color') || '#eee').trim();
+      Chart.defaults.color       = fg;
+      Chart.defaults.borderColor = grid;
+
+      {% if report.include_timeline and report.timeline_json != 'null' %}
+      var tl = {{ report.timeline_json|safe }};
+      if (tl.days && tl.days.length) {
+        new Chart(document.getElementById('rptTimeline'), {
+          type: 'bar',
+          data: {
+            labels: tl.days,
+            datasets: [
+              { label: 'Opened',    data: tl.opened,        backgroundColor: 'rgba(0,120,212,.7)' },
+              { label: 'Clicked',   data: tl.clicked,       backgroundColor: 'rgba(255,140,0,.85)' },
+              { label: 'Submitted', data: tl.submitted,     backgroundColor: 'rgba(209,52,56,.85)' },
+              { label: 'MFA subm.', data: tl.mfa_submitted, backgroundColor: 'rgba(164,38,44,.8)' },
+              { label: 'Reported',  data: tl.reported,      backgroundColor: 'rgba(16,124,16,.8)' },
+            ]
+          },
+          options: {
+            plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
+            scales: {
+              x: { stacked: true, ticks: { font: { size: 11 } } },
+              y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }
+            }
+          }
+        });
+      }
+      {% endif %}
+
+      {% if report.include_dept_chart and report.dept_json != 'null' %}
+      var dp = {{ report.dept_json|safe }};
+      if (dp && dp.depts && dp.depts.length) {
+        new Chart(document.getElementById('rptDeptChart'), {
+          type: 'bar',
+          data: {
+            labels: dp.depts,
+            datasets: [{
+              label: 'Click %', data: dp.click_pct,
+              backgroundColor: 'rgba(16,124,16,.75)', borderRadius: 3,
+            }]
+          },
+          options: {
+            indexAxis: 'y',
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  afterLabel: function(ctx) {
+                    return 'Clicked: ' + dp.clicked[ctx.dataIndex] + '  Submitted: ' + dp.submitted[ctx.dataIndex];
+                  }
+                }
+              }
+            },
+            scales: {
+              x: { beginAtZero: true, max: 100, title: { display: true, text: '%', font: { size: 11 } } },
+              y: { ticks: { font: { size: 11 } } }
+            }
+          }
+        });
+      }
+      {% endif %}
+
+      {% if report.include_ttc_chart and report.ttc_json != 'null' %}
+      var ttc = {{ report.ttc_json|safe }};
+      if (ttc && ttc.data && ttc.data.some(function(v){ return v > 0; })) {
+        new Chart(document.getElementById('rptTtcChart'), {
+          type: 'bar',
+          data: {
+            labels: ttc.labels,
+            datasets: [{
+              label: 'Clicks', data: ttc.data,
+              backgroundColor: ['#5c2d91','#8764b8','#b4a0e5','#d9d2f5','#e8c4f0','#f4e0f8'],
+              borderRadius: 3,
+            }]
+          },
+          options: {
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { ticks: { font: { size: 11 } } },
+              y: { beginAtZero: true, ticks: { precision: 0 } }
+            }
+          }
+        });
+      }
+      {% endif %}
+    })();
+    </script>
+    {% endif %}
+
+  </div>{# /dash-main #}
+</div>{# /dash-layout #}
+{% endblock %}

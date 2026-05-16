@@ -1,0 +1,43 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<div style="max-width:480px;margin:40px auto;font-family:'Segoe UI',sans-serif">
+  <h1 style="font-size:22px;font-weight:600;margin-bottom:8px">Debug Mode</h1>
+  <p style="color:#605e5c;margin-bottom:24px;font-size:14px">
+    Toggles <code>DEBUG</code> in memory and writes the change to <code>.env</code>.
+    The server must be restarted for the .env change to take effect on the next boot.
+    The in-memory change applies immediately to this process.
+  </p>
+
+  <div style="background:#fff;border:1px solid #edebe9;padding:24px;border-radius:2px;margin-bottom:24px">
+    <p style="font-size:15px;margin-bottom:16px">
+      Current status:
+      {% if debug %}
+        <strong style="color:#d13438">DEBUG = True</strong> — detailed error pages shown, custom error templates inactive.
+      {% else %}
+        <strong style="color:#107c10">DEBUG = False</strong> — custom error pages active, no traceback shown to users.
+      {% endif %}
+    </p>
+
+    <form method="post">
+      {% csrf_token %}
+      {% if debug %}
+        <input type="hidden" name="debug" value="0">
+        <button type="submit"
+          style="background:#107c10;color:#fff;border:none;padding:9px 20px;font-size:14px;font-weight:600;cursor:pointer;border-radius:2px">
+          Turn Debug OFF
+        </button>
+      {% else %}
+        <input type="hidden" name="debug" value="1">
+        <button type="submit"
+          style="background:#d13438;color:#fff;border:none;padding:9px 20px;font-size:14px;font-weight:600;cursor:pointer;border-radius:2px">
+          Turn Debug ON
+        </button>
+      {% endif %}
+    </form>
+  </div>
+
+  <p style="font-size:12px;color:#a19f9d">
+    <a href="/admin/" style="color:#0078d4">Back to dashboard</a>
+  </p>
+</div>
+{% endblock %}

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>E-mail nahlášen</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Helvetica,Arial,sans-serif;background:#faf9f8;color:#323130;min-height:100vh}
+
+  .banner{background:#107c10;color:#fff;padding:16px 20px;display:flex;align-items:center;gap:10px;font-size:15px;font-weight:600}
+
+  .container{max-width:600px;margin:32px auto;padding:0 20px;text-align:left}
+
+  .hero{text-align:center;padding:4px 0 24px}
+  h1{font-size:26px;font-weight:600;color:#107c10;margin-bottom:10px}
+  .subtitle{font-size:15px;color:#605e5c;line-height:1.6;margin-bottom:20px}
+  .stat{display:inline-block;background:#dff6dd;border:1px solid #107c10;padding:8px 18px;border-radius:2px;font-size:14px;color:#0b6a0b;font-weight:600;margin-bottom:28px}
+
+  .card{background:#fff;border:1px solid #edebe9;padding:22px;margin-bottom:16px;border-radius:2px}
+  .card h2{font-size:15px;font-weight:600;margin-bottom:12px}
+
+  .tips{list-style:none;display:flex;flex-direction:column;gap:10px}
+  .tips li{display:flex;align-items:flex-start;gap:10px;font-size:14px;line-height:1.55}
+  .tips li::before{content:"✓";color:#107c10;font-weight:700;flex-shrink:0;padding-top:1px}
+
+  footer{text-align:center;font-size:12px;color:#a19f9d;padding:24px 20px 40px}
+
+  @media(max-width:540px){
+    h1{font-size:22px}
+    .container{margin:20px auto}
+    .card{padding:16px}
+  }
+</style>
+</head>
+<body>
+
+<div class="banner">
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+    <circle cx="10" cy="10" r="9" stroke="#fff" stroke-width="1.5"/>
+    <path d="M6 10l3 3 5-6" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  Správně — e-mail jste nahlásili
+</div>
+
+<div class="container">
+
+  <div class="hero">
+    <h1>Výborně, toto byl phishing</h1>
+    <p class="subtitle">
+      Správně jste identifikovali a nahlásili simulovaný phishingový e-mail.<br>
+      Toto je přesně ten správný postup.
+    </p>
+    <div class="stat">Jednalo se o řízenou phishingovou simulaci.</div>
+  </div>
+
+  <div class="card">
+    <h2>Proč je nahlášení důležité?</h2>
+    <ul class="tips">
+      <li>Rychlé nahlášení umožňuje upozornit ostatní uživatele dříve, než se sami stanou obětí.</li>
+      <li>Uživatelé, kteří phishing nahlásí, fungují jako nejúčinnější systém včasného varování.</li>
+      <li>V reálném útoku by vaše nahlášení mohlo ochránit desítky dalších lidí ve stejné organizaci.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Co se děje s vašimi daty?</h2>
+    <p style="font-size:14px;line-height:1.65">
+      Tento e-mail byl součástí simulace pro bakalářskou práci na FEL ČVUT
+      zaměřenou na bezpečnostní povědomí studentů.
+      Vaše reakce (nahlášení) je zaznamenána anonymně jako statistika —
+      žádná osobní data nebyla odeslána ani uložena.
+      <br><br>
+      Děkujeme za nahlášení.
+    </p>
+  </div>
+
+</div>
+<footer>Simulace bezpečnostního povědomí &nbsp;&middot;&nbsp; bakalářská práce FEL ČVUT &nbsp;&middot;&nbsp; {{ ct.campaign.name }}</footer>
+</body>
+</html>

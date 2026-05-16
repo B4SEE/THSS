@@ -1,0 +1,18 @@
+{% extends "admin/base.html" %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  #debug-toggle-link { color: #fff; text-decoration: none; }
+  @media (prefers-color-scheme: dark) {
+    #debug-toggle-link { color: #79aec8; }
+  }
+</style>
+{% endblock %}
+
+{% block userlinks %}
+  {% if user.is_superuser %}
+    <a id="debug-toggle-link" href="/admin/settings/debug/">{% if debug %}<span style="color:#d13438;font-weight:600">DEBUG ON</span>{% else %}Debug{% endif %}</a> &rsaquo;
+  {% endif %}
+  {{ block.super }}
+{% endblock %}

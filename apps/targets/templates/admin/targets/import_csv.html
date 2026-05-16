@@ -1,0 +1,15 @@
+{% extends "admin/base_site.html" %}
+{% block content %}
+<h2>Import Targets from CSV</h2>
+<p>Required: <code>email</code>, <code>full_name</code> &nbsp;|&nbsp; Optional: <code>department</code></p>
+<pre style="background:#f8f8f8;padding:10px;border:1px solid #ddd;display:inline-block;margin-bottom:20px">email,full_name,department
+alice@company.com,Alice Smith,Engineering
+bob@company.com,Bob Jones,Marketing</pre>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+  <p><label><strong>CSV file:</strong><br><input type="file" name="csv_file" accept=".csv" required style="margin-top:6px"></label></p>
+  <p><label><input type="checkbox" name="replace"> <strong>Replace entire list</strong> — deletes all existing targets first. Leave unchecked to add/update only.</label></p>
+  <p><input type="submit" value="Import" class="default"> &nbsp; <a href="..">Cancel</a></p>
+</form>
+{% endblock %}

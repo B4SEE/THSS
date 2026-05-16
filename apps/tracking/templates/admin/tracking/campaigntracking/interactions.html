@@ -1,0 +1,187 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}{{ campaign.name }} — Interactions{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Home</a>
+  &rsaquo; <a href="{% url 'admin:tracking_campaigntracking_changelist' %}">Campaign Dashboards</a>
+  &rsaquo; <a href="{% url 'admin:tracking_campaigntracking_change' campaign.pk %}">{{ campaign.name }}</a>
+  &rsaquo; Interactions
+</div>
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+.dash-layout { display: flex; gap: 0; }
+.dash-sidebar {
+  width: 180px; min-width: 180px; flex-shrink: 0;
+  border-right: 1px solid var(--hairline-color);
+  padding-right: 20px; margin-right: 28px;
+}
+.dash-sidebar .sb-title {
+  font-weight: 700; font-size: 13px; line-height: 1.4;
+  padding-bottom: 12px; margin-bottom: 12px;
+  border-bottom: 1px solid var(--hairline-color); color: var(--body-fg); word-break: break-word;
+}
+.dash-sidebar ul { list-style: none; margin: 0; padding: 0; }
+.dash-sidebar ul li a {
+  display: block; padding: 7px 10px; border-radius: 3px;
+  font-size: 13px; color: var(--body-fg); text-decoration: none; margin-bottom: 2px;
+}
+.dash-sidebar ul li a:hover { background: var(--darkened-bg); }
+.dash-sidebar ul li.active a { background: var(--selected-bg); color: var(--link-fg); font-weight: 600; }
+.dash-sidebar .sb-back { display: block; margin-top: 20px; font-size: 12px; color: var(--body-quiet-color); text-decoration: none; }
+.dash-sidebar .sb-back:hover { color: var(--link-fg); }
+.dash-main { flex: 1; min-width: 0; }
+
+table.itlog { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+table.itlog th {
+  background: var(--darkened-bg); border-bottom: 1px solid var(--border-color);
+  padding: 6px 10px; text-align: left; font-weight: 600;
+  color: var(--body-fg); white-space: nowrap;
+}
+table.itlog td {
+  padding: 5px 10px; border-bottom: 1px solid var(--hairline-color);
+  color: var(--body-fg); vertical-align: top; overflow: hidden;
+}
+table.itlog .it-row { cursor: pointer; }
+table.itlog .it-row:hover td { background: var(--darkened-bg); }
+table.itlog .it-row.expanded td { background: var(--selected-bg); }
+table.itlog .it-detail td {
+  padding: 8px 12px 12px 12px;
+  background: var(--darkened-bg);
+  font-size: 12px; white-space: pre-wrap; word-break: break-all;
+  color: var(--body-fg);
+}
+.ev-opened        { color: #0078d4; font-weight: 600; }
+.ev-clicked       { color: #ff8c00; font-weight: 600; }
+.ev-submitted     { color: #d13438; font-weight: 600; }
+.ev-mfa_submitted { color: #a4262c; font-weight: 600; }
+.ev-reported      { color: #107c10; font-weight: 600; }
+.del-btn {
+  background: none; border: 1px solid #c00; color: #c00;
+  padding: 1px 7px; border-radius: 3px; cursor: pointer; font-size: 11px;
+}
+.del-btn:hover { background: #c00; color: #fff; }
+.expand-hint {
+  font-size: 11px; color: var(--body-quiet-color); margin-bottom: 10px;
+}
+.empty-note { color: var(--body-quiet-color); font-style: italic; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dash-layout">
+
+  <aside class="dash-sidebar">
+    <div class="sb-title">{{ campaign.name }}</div>
+    <ul>
+      <li><a href="{% url 'admin:tracking_campaigntracking_change' campaign.pk %}">Overview</a></li>
+      <li class="active"><a href="{% url 'admin:tracking_campaigntracking_interactions' campaign.pk %}">Interactions</a></li>
+      <li><a href="{% url 'admin:tracking_campaigntracking_report' campaign.pk %}">Report</a></li>
+    </ul>
+    <a class="sb-back" href="{% url 'admin:tracking_campaigntracking_changelist' %}">&larr; All campaigns</a>
+  </aside>
+
+  <div class="dash-main">
+    <h1 style="margin-top:0">Interactions
+      <span style="font-size:14px;font-weight:400;color:var(--body-quiet-color);margin-left:8px">
+        {{ interactions|length }} event{{ interactions|length|pluralize }}
+      </span>
+    </h1>
+
+    {% if can_delete %}
+    <p style="font-size:12px;color:#c55;margin-bottom:10px">
+      DEBUG mode — delete buttons visible (superadmin only).
+    </p>
+    {% endif %}
+
+    {% if interactions %}
+    <p class="expand-hint">Click any row to expand full details.</p>
+    <table class="itlog">
+      <colgroup>
+        <col style="width:130px">
+        <col style="width:180px">
+        <col style="width:95px">
+        <col style="width:90px">
+        <col style="width:110px">
+        <col><!-- UA - takes remaining space -->
+        {% if can_delete %}<col style="width:65px">{% endif %}
+      </colgroup>
+      <thead>
+        <tr>
+          <th>Time (local)</th>
+          <th>Target</th>
+          <th>Event</th>
+          <th>&Delta; time</th>
+          <th>IP address</th>
+          <th>User agent</th>
+          {% if can_delete %}<th></th>{% endif %}
+        </tr>
+      </thead>
+      <tbody>
+      {% for i in interactions %}
+        <tr class="it-row" onclick="toggleDetail(this)">
+          <td style="white-space:nowrap;font-size:12px">{{ i.event_timestamp|date:"Y-m-d H:i:s" }}</td>
+          <td>
+            {{ i.campaign_target.target.full_name }}<br>
+            <span style="font-size:11px;color:var(--body-quiet-color)">{{ i.campaign_target.target.email }}</span>
+          </td>
+          <td class="ev-{{ i.event_type }}">{{ i.get_event_type_display }}</td>
+          <td style="white-space:nowrap;font-size:12px;color:var(--body-quiet-color)">
+            {% if i.delta_seconds is not None %}
+              {% if i.delta_seconds < 60 %}{{ i.delta_seconds }}s
+              {% else %}{{ i.delta_minutes }}m {{ i.delta_remainder }}s{% endif %}
+              <span style="font-size:10px">({{ i.delta_source }})</span>
+            {% else %}—{% endif %}
+          </td>
+          <td style="font-size:12px">{{ i.ip_address|default:"—" }}</td>
+          <td style="font-size:11px;color:var(--body-quiet-color);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+            {{ i.user_agent|default:"—"|truncatechars:60 }}
+          </td>
+          {% if can_delete %}
+          <td onclick="event.stopPropagation()">
+            <form method="post" style="margin:0" onsubmit="return confirm('Delete this interaction?')">
+              {% csrf_token %}
+              <input type="hidden" name="delete_interaction" value="{{ i.pk }}">
+              <button type="submit" class="del-btn">Del</button>
+            </form>
+          </td>
+          {% endif %}
+        </tr>
+        <tr class="it-detail" style="display:none">
+          <td colspan="{% if can_delete %}7{% else %}6{% endif %}">
+            <strong>Full user agent:</strong><br>{{ i.user_agent|default:"—" }}
+            <br><br>
+            <strong>IP address:</strong> {{ i.ip_address|default:"—" }}
+            &nbsp;&nbsp;
+            <strong>Timestamp (UTC):</strong> {{ i.event_timestamp|date:"Y-m-d H:i:s" }} UTC
+            {% if i.submitted_data %}
+            <br><br>
+            <strong>Submitted data:</strong> {{ i.submitted_data }}
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="empty-note">No interactions recorded for this campaign.</p>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+function toggleDetail(row) {
+  var detail = row.nextElementSibling;
+  if (!detail || !detail.classList.contains('it-detail')) return;
+  var open = detail.style.display !== 'none';
+  detail.style.display = open ? 'none' : 'table-row';
+  row.classList.toggle('expanded', !open);
+}
+</script>
+{% endblock %}

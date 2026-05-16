@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Simulovaný phishing — výsledky</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Arial,sans-serif;background:#faf9f8;color:#1b1b1b;min-height:100vh}
+
+  .banner{background:#1a3a6b;color:#fff;padding:16px 20px;display:flex;align-items:flex-start;gap:12px;font-size:15px;font-weight:600;line-height:1.4}
+  .banner svg{flex-shrink:0;margin-top:1px}
+
+  .container{max-width:680px;margin:32px auto;padding:0 20px;text-align:left}
+
+  h1{font-size:24px;font-weight:600;margin-bottom:8px;line-height:1.3}
+  .subtitle{font-size:14px;color:#605e5c;margin-bottom:28px;line-height:1.6}
+
+  .card{background:#fff;border:1px solid #edebe9;padding:22px;margin-bottom:16px;border-radius:2px}
+  .card h2{font-size:15px;font-weight:600;margin-bottom:14px;color:#1b1b1b}
+
+  .flag-list{list-style:none;display:flex;flex-direction:column;gap:13px}
+  .flag-list li{display:flex;align-items:flex-start;gap:10px;font-size:14px;line-height:1.55}
+
+  .flag-tag{flex-shrink:0;font-weight:700;font-size:10px;padding:3px 0;border-radius:2px;margin-top:2px;text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;width:82px;text-align:center}
+  .tag-urgency{background:#fff4ce;color:#8a6914}
+  .tag-threat{background:#fde7e9;color:#a80000}
+  .tag-link{background:#dff6dd;color:#0b6a0b}
+  .tag-sender{background:#eff6fc;color:#005a9e}
+  .tag-process{background:#f4f4f4;color:#605e5c}
+  .tag-mfa{background:#f0e6ff;color:#6b21a8}
+
+  .positive{background:#dff6dd;border-color:#107c10}
+  .positive h2{color:#0b6a0b}
+
+  footer{text-align:center;font-size:12px;color:#a19f9d;padding:24px 20px 40px}
+
+  @media(max-width:540px){
+    h1{font-size:20px}
+    .container{margin:20px auto}
+    .card{padding:16px}
+    .flag-list li{flex-direction:column;gap:4px}
+    .flag-tag{align-self:flex-start;margin-top:0}
+  }
+</style>
+</head>
+<body>
+
+<div class="banner">
+  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+    <circle cx="10" cy="10" r="9" stroke="#fff" stroke-width="1.5"/>
+    <path d="M10 6v4" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="10" cy="13.5" r="1" fill="#fff"/>
+  </svg>
+  Toto byl simulovaný phishing — součást výzkumu bezpečnostního povědomí
+</div>
+
+<div class="container">
+
+  <h1>Zadali jste přihlašovací údaje a kód MFA</h1>
+  <p class="subtitle">
+    Žádné heslo ani kód nebyly nikam odeslány ani uloženy. Tento e-mail byl součástí
+    simulace pro bakalářskou práci na FEL ČVUT zaměřenou na bezpečnostní povědomí studentů.
+  </p>
+
+  <div class="card">
+    <h2>Co bylo na tomto e-mailu podezřelé?</h2>
+    <ul class="flag-list">
+      <li>
+        <span class="flag-tag tag-sender">Odesílatel</span>
+        <span>Adresa odesílatele nevychází z domény @fel.cvut.cz ani @cvut.cz. Zobrazené jméno lze libovolně napodobit — vždy si rozbalte celou e-mailovou adresu a zkontrolujte doménu.</span>
+      </li>
+      <li>
+        <span class="flag-tag tag-link">Odkaz</span>
+        <span>Tlačítko v e-mailu vedlo na doménu, která <em>není</em> kos.cvut.cz ani logon.ms.cvut.cz. Před kliknutím najeďte myší na odkaz — skutečná URL se zobrazí v liště prohlížeče.</span>
+      </li>
+      <li>
+        <span class="flag-tag tag-urgency">Naléhavost</span>
+        <span>Deadline v e-mailu vytváří časový tlak, který omezuje čas na rozmyšlení a ověření. Legitimní komunikace od ČVUT probíhá zpravidla více kanály a s dostatečnou lhůtou.</span>
+      </li>
+      <li>
+        <span class="flag-tag tag-process">Postup</span>
+        <span>Hodnocení přes KOS je dostupné přímo na kos.cvut.cz — není nutné klikat na odkaz v e-mailu. Pokud si nejste jistí, přejděte na stránku zadáním adresy ručně do prohlížeče.</span>
+      </li>
+      <li>
+        <span class="flag-tag tag-mfa">MFA</span>
+        <span>Zadali jste i kód z aplikace Microsoft Authenticator. Skutečný útočník by jej okamžitě použil k přihlášení do vašeho účtu — MFA nechrání před phishingem probíhajícím v reálném čase.</span>
+      </li>
+    </ul>
+  </div>
+
+  <div class="card positive">
+    <h2>Co se děje s vašimi daty?</h2>
+    <p style="font-size:14px;line-height:1.65">
+      Tento e-mail byl součástí simulace pro bakalářskou práci na FEL ČVUT.
+      Žádné zadané heslo ani kód nebyly nikam odeslány ani uloženy.
+      Vaše odpověď je zaznamenána pouze anonymně jako statistika
+      (klik, přihlášení, nahlášení) — bez jakýchkoliv osobních dat.
+      <br><br>
+      Děkujeme za účast.
+    </p>
+  </div>
+
+</div>
+<footer>Simulace bezpečnostního povědomí &nbsp;&middot;&nbsp; bakalářská práce FEL ČVUT &nbsp;&middot;&nbsp; {{ ct.campaign.name }}</footer>
+</body>
+</html>

@@ -1,0 +1,40 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<h2>Import Employees from CSV</h2>
+
+<p>
+  Required columns: <code>email</code>, <code>full_name</code><br>
+  Optional columns: <code>department</code><br>
+  Encoding: UTF-8 (with or without BOM). First row must be a header.
+</p>
+
+<p>Example:</p>
+<pre style="background:#f8f8f8;padding:10px;border:1px solid #ddd;display:inline-block">
+email,full_name,department
+alice@company.com,Alice Smith,Engineering
+bob@company.com,Bob Jones,Marketing
+</pre>
+
+<form method="post" enctype="multipart/form-data" style="margin-top:20px">
+  {% csrf_token %}
+
+  <div style="margin-bottom:16px">
+    <label for="csv_file"><strong>CSV file:</strong></label><br>
+    <input type="file" name="csv_file" id="csv_file" accept=".csv" required style="margin-top:6px">
+  </div>
+
+  <div style="margin-bottom:20px">
+    <label>
+      <input type="checkbox" name="replace">
+      <strong>Replace entire list</strong> — deletes all existing employees before importing.
+      Leave unchecked to add/update only.
+    </label>
+  </div>
+
+  <input type="submit" value="Import" class="default">
+  &nbsp;
+  <a href="..">Cancel</a>
+</form>
+{% endblock %}

