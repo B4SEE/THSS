@@ -1,12 +1,22 @@
+"""
+Shared Django admin utilities: IP extraction, audit logging, and permission mixins.
+"""
 from django.contrib import admin
 
 
 def _get_ip(request):
+    """Return the client IP from X-Forwarded-For or REMOTE_ADDR."""
     xff = request.META.get('HTTP_X_FORWARDED_FOR', '')
     return xff.split(',')[0].strip() if xff else request.META.get('REMOTE_ADDR', '')
 
 
 def audit(request, action, obj=None, changes=None, entity_type=None, entity_id=None):
+    """
+    Create an AuditLog entry from an admin action.
+
+    Resolves actor details from request.user automatically.
+    Pass obj for automatic entity type/id resolution, or supply entity_type/entity_id directly.
+    """
     from apps.audit.models import AuditLog
     user = getattr(request, 'user', None)
     authenticated = user is not None and getattr(user, 'is_authenticated', False)

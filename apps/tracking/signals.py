@@ -1,3 +1,10 @@
+"""
+Real-time broadcasting of tracking events via Redis pub/sub.
+
+When an Interaction is created, its metadata is published to the
+'dashboard:events' Redis channel for live dashboard updates.
+Failures are logged but never re-raised — tracking must not block on Redis.
+"""
 import json
 import logging
 
@@ -13,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 @receiver(post_save, sender=Interaction)
 def broadcast_interaction(sender, instance, created, **kwargs):
+    """Publish a newly created Interaction to the Redis dashboard channel."""
     if not created:
         return
     try:

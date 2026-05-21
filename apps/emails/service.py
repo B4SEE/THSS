@@ -1,3 +1,10 @@
+"""
+Outbound phishing email delivery via the Resend API.
+
+Tracking tokens and convincing URL spoofing are injected here.
+The @ trick (https://prefix@real-host) makes links appear to come from
+a legitimate domain in plain-text email clients.
+"""
 import logging
 import re
 from datetime import timedelta
@@ -19,6 +26,7 @@ _CATEGORY_PREFIX = {
 }
 
 def _name_slug(full_name: str) -> str:
+    """Convert a full name to a URL-safe dot-separated slug (e.g. 'John Doe' → 'john.doe')."""
     slug = re.sub(r'[^a-z0-9]+', '.', full_name.lower()).strip('.')
     return slug or 'user'
 
@@ -31,8 +39,19 @@ def _convincing_base(base: str, category: str) -> str:
 
 
 class PhishingEmailService:
+    """
+    Sends a single phishing email for a CampaignTarget via Resend.
+
+    Applies A/B overrides (template / subject / sender) when the target's variant
+    differs from the control group, then renders the template and dispatches via Resend.
+    """
 
     def send_for_target(self, ct: CampaignTarget) -> bool:
+        """
+        Build and send the phishing email for the given CampaignTarget.
+
+        Returns True on success, False on any Resend API failure.
+        """
         resend.api_key = settings.RESEND_API_KEY
 
         token    = make_token(ct.id)
@@ -88,6 +107,7 @@ class PhishingEmailService:
 
     @staticmethod
     def _render(body: str, context: dict) -> str:
+        """Replace {{key}} placeholders in body with their string values from context."""
         for key, value in context.items():
             body = body.replace('{{' + key + '}}', str(value))
         return body

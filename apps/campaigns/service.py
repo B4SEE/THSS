@@ -1,3 +1,4 @@
+"""Business logic for sending campaigns and managing their lifecycle."""
 import logging
 import random
 import time
@@ -11,6 +12,14 @@ logger = logging.getLogger(__name__)
 
 
 class CampaignService:
+    """
+    Orchestrates campaign dispatch.
+
+    send()                — resolve recipients, allocate variants, fire emails.
+    reset()               — roll back a campaign to Draft.
+    _resolve_recipients() — apply targeting mode and exclusion rules.
+    _build_variant_map()  — proportionally assign A/B variants.
+    """
 
     def send(self, campaign: Campaign, batch_limit: int = 0, send_delay: float | None = None):
         """
@@ -101,6 +110,7 @@ class CampaignService:
 
     @staticmethod
     def reset(campaign: Campaign):
+        """Reset campaign to Draft; clear all sent_at timestamps and remove approver."""
         campaign.targets.all().update(sent_at=None)
         campaign.status = Campaign.Status.DRAFT
         campaign.approved_by = None
@@ -108,6 +118,12 @@ class CampaignService:
 
     @staticmethod
     def _resolve_recipients(campaign: Campaign) -> list:
+        """
+        Return the final list of opt-in Targets for this campaign.
+
+        Applies the campaign's targeting mode (ALL / DEPARTMENT / GROUP / INDIVIDUAL),
+        merges individual_targets add-ons, then strips excluded_targets and opted-out targets.
+        """
         from apps.targets.models import Target
         base = Target.objects.filter(opt_out=False)
 

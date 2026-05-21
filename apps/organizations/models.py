@@ -1,8 +1,15 @@
+"""
+Platform administrator accounts and organizational hierarchy.
+
+Department — org chart node, optionally nested.
+User       — platform admins who log in to manage campaigns; NOT phishing targets.
+"""
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 
 
 class Department(models.Model):
+    """Organizational unit in the company hierarchy, optionally nested under a parent."""
     name        = models.CharField(max_length=100)
     parent_dept = models.ForeignKey(
         'self', null=True, blank=True, on_delete=models.SET_NULL, related_name='children'
@@ -17,7 +24,10 @@ class Department(models.Model):
 
 
 class UserManager(BaseUserManager):
+    """Custom manager using email as the unique identifier instead of username."""
+
     def create_user(self, email, full_name, password=None, **extra_fields):
+        """Create and save a platform user with the given email, full_name, and password."""
         if not email:
             raise ValueError('Email is required')
         email = self.normalize_email(email)
@@ -27,6 +37,7 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(self, email, full_name, password=None, **extra_fields):
+        """Create and save a superuser; forces is_staff=True and is_superuser=True."""
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(email, full_name, password, **extra_fields)

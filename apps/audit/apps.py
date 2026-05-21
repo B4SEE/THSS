@@ -1,3 +1,9 @@
+"""
+Django auth signal handlers that write login/logout events to AuditLog.
+
+Wired up in AuditConfig.ready() so they are registered exactly once
+when the app is loaded, not during each request.
+"""
 from django.apps import AppConfig
 
 
@@ -16,6 +22,7 @@ class AuditConfig(AppConfig):
 
 
 def _get_ip(request):
+    """Extract the client IP from the request, honouring X-Forwarded-For."""
     if not request:
         return None
     xff = request.META.get('HTTP_X_FORWARDED_FOR', '')
@@ -23,6 +30,7 @@ def _get_ip(request):
 
 
 def _on_login(sender, request, user, **kwargs):
+    """Log a successful login event to the audit trail."""
     from apps.audit.models import AuditLog
     AuditLog.objects.create(
         user        = user,
@@ -36,6 +44,7 @@ def _on_login(sender, request, user, **kwargs):
 
 
 def _on_logout(sender, request, user, **kwargs):
+    """Log a logout event; skipped if user is anonymous."""
     from apps.audit.models import AuditLog
     if not user:
         return
@@ -51,6 +60,7 @@ def _on_logout(sender, request, user, **kwargs):
 
 
 def _on_login_failed(sender, credentials, request, **kwargs):
+    """Log a failed login attempt, recording the attempted email address."""
     from apps.audit.models import AuditLog
     attempted_email = credentials.get('username', '') or credentials.get('email', '')
     AuditLog.objects.create(

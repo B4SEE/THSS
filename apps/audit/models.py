@@ -1,8 +1,20 @@
+"""
+Immutable audit trail for all admin actions on the platform.
+
+AuditLog entries are created by the audit() helper in admin_mixins.py
+and by the auth signal handlers in audit/apps.py.  Entries are never updated.
+"""
 from django.db import models
 from django.conf import settings
 
 
 class AuditLog(models.Model):
+    """
+    Append-only record of an admin action.
+
+    Actor identity is denormalized (actor_email, actor_name) so entries survive
+    user deletion.  The FK user field is nullable for the same reason.
+    """
     timestamp    = models.DateTimeField(auto_now_add=True, db_index=True)
 
     # Who did it — FK may be null if user deleted; email/name preserved in denorm fields

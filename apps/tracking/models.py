@@ -1,3 +1,9 @@
+"""
+Interaction logging for the tracking layer.
+
+CampaignTracking — proxy over Campaign used for the admin dashboard sidebar.
+Interaction       — immutable record of a single tracking event (open, click, submit, report).
+"""
 from django.db import models
 from django.utils import timezone
 
@@ -14,6 +20,8 @@ class CampaignTracking(Campaign):
 
 
 class Interaction(models.Model):
+    """A single recorded tracking event associated with a CampaignTarget."""
+
     class EventType(models.TextChoices):
         OPENED        = 'opened',        'Opened'
         CLICKED       = 'clicked',       'Clicked'

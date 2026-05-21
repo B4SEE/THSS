@@ -1,3 +1,10 @@
+"""
+URL-based tracking endpoints for the phishing simulation.
+
+All endpoints accept a signed token encoding the CampaignTarget pk.
+Events are idempotent where appropriate — duplicate clicks are not re-logged,
+but duplicate pixel loads always are (email client prefetch compatibility).
+"""
 import logging
 from django.core import signing
 from django.http import HttpResponse, Http404
@@ -30,11 +37,13 @@ _SCANNER_UA = [
 
 
 def _is_scanner(request) -> bool:
+    """Return True if the request User-Agent matches a known security scanner."""
     ua = request.META.get('HTTP_USER_AGENT', '').lower()
     return any(p in ua for p in _SCANNER_UA)
 
 
 def _parse_ua(ua_string: str) -> dict:
+    """Parse a User-Agent string into device, OS, and browser components."""
     ua = (ua_string or '').lower()
     # Device
     device = 'Mobile' if any(h in ua for h in [
@@ -76,6 +85,7 @@ def _parse_ua(ua_string: str) -> dict:
 
 
 def _resolve(token: str) -> CampaignTarget:
+    """Decode and validate a signed token; raise Http404 on bad signature or missing record."""
     try:
         pk = resolve_token(token)
     except (signing.BadSignature, signing.SignatureExpired):
@@ -87,6 +97,7 @@ def _resolve(token: str) -> CampaignTarget:
 
 
 def _is_finished(ct: CampaignTarget) -> bool:
+    """Return True when the campaign is FINISHED or its finish_date has passed."""
     campaign = ct.campaign
     if campaign.status == Campaign.Status.FINISHED:
         return True
@@ -96,11 +107,13 @@ def _is_finished(ct: CampaignTarget) -> bool:
 
 
 def _get_ip(request) -> str:
+    """Extract the real client IP, respecting X-Forwarded-For proxy headers."""
     xff = request.META.get('HTTP_X_FORWARDED_FOR', '')
     return xff.split(',')[0].strip() if xff else request.META.get('REMOTE_ADDR', '')
 
 
 def _log(ct: CampaignTarget, event_type: str, request, submitted_data=None):
+    """Create an Interaction record for the given event type, enriched with UA and IP metadata."""
     ua_raw = request.META.get('HTTP_USER_AGENT', '')
     meta = {
         'language': request.META.get('HTTP_ACCEPT_LANGUAGE', '')[:80],
@@ -119,10 +132,12 @@ def _log(ct: CampaignTarget, event_type: str, request, submitted_data=None):
 
 
 def _has_event(ct: CampaignTarget, *event_types) -> bool:
+    """Return True if any of the given event_types have been logged for this CampaignTarget."""
     return Interaction.objects.filter(campaign_target=ct, event_type__in=event_types).exists()
 
 
 def _terminal_redirect(ct: CampaignTarget, name: str, token: str):
+    """Return a redirect to the terminal page if a final event was already logged, else None."""
     if _has_event(ct, Interaction.EventType.SUBMITTED, Interaction.EventType.MFA_SUBMITTED):
         return redirect('tracking:feedback', name=name, token=token)
     if _has_event(ct, Interaction.EventType.REPORTED):
@@ -148,6 +163,7 @@ def _capture_js_tracking(post_data: dict) -> dict:
 
 @require_GET
 def pixel(request, name: str, token: str):
+    """Serve a 1×1 GIF tracking pixel and log an OPENED event."""
     ct = _resolve(token)
     if not _is_finished(ct):
         _log(ct, Interaction.EventType.OPENED, request)
@@ -156,6 +172,7 @@ def pixel(request, name: str, token: str):
 
 @require_GET
 def landing(request, name: str, token: str):
+    """Render the phishing landing page and log a CLICKED event on first non-scanner visit."""
     ct = _resolve(token)
     if _is_finished(ct):
         return render(request, 'tracking/campaign_finished.html', {'ct': ct})
@@ -176,6 +193,7 @@ def landing(request, name: str, token: str):
 @csrf_exempt
 @require_POST
 def submit(request, name: str, token: str):
+    """Process credential submission; log SUBMITTED event and redirect to MFA or feedback."""
     ct = _resolve(token)
     if _is_finished(ct):
         return render(request, 'tracking/campaign_finished.html', {'ct': ct})
@@ -195,6 +213,7 @@ def submit(request, name: str, token: str):
 
 @csrf_exempt
 def mfa(request, name: str, token: str):
+    """CTU-specific MFA step; log MFA_SUBMITTED on POST and redirect to feedback."""
     ct = _resolve(token)
     if _is_finished(ct):
         return render(request, 'tracking/campaign_finished.html', {'ct': ct})
@@ -218,6 +237,7 @@ def mfa(request, name: str, token: str):
 
 @require_GET
 def feedback(request, name: str, token: str):
+    """Render the educational feedback page after a target submits credentials."""
     ct = _resolve(token)
     if _is_finished(ct):
         return render(request, 'tracking/campaign_finished.html', {'ct': ct})
@@ -232,6 +252,7 @@ def feedback(request, name: str, token: str):
 
 @require_GET
 def report(request, name: str, token: str):
+    """Render the phishing-reported confirmation page and log a REPORTED event on first visit."""
     ct = _resolve(token)
     if _is_finished(ct):
         return render(request, 'tracking/campaign_finished.html', {'ct': ct})

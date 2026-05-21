@@ -1,3 +1,12 @@
+"""
+Campaign domain models.
+
+SenderProfile  — From identity used when sending emails.
+Template       — Email body/subject blueprint with difficulty rating.
+Campaign       — Orchestrates sending to a resolved set of Targets.
+CampaignTarget — Tracks which Target was sent which Campaign email.
+ABTest         — Defines a variant for A/B testing within a Campaign.
+"""
 from django.db import models
 from django.conf import settings
 
@@ -22,6 +31,8 @@ class SenderProfile(models.Model):
 
 
 class Template(models.Model):
+    """Email template with subject, HTML body, difficulty rating, and optional educational content."""
+
     class Difficulty(models.TextChoices):
         LOW    = 'low',    'Low'
         MEDIUM = 'medium', 'Medium'
@@ -43,6 +54,13 @@ class Template(models.Model):
 
 
 class Campaign(models.Model):
+    """
+    Core campaign object driving the full send lifecycle.
+
+    Status flow: DRAFT → SCHEDULED → RUNNING → COMPLETED → FINISHED.
+    Targets are resolved at send time from target_type and the matching relation sets.
+    """
+
     class TargetType(models.TextChoices):
         ALL        = 'all',        'All Targets'
         DEPARTMENT = 'department', 'By Department'
@@ -123,6 +141,8 @@ class CampaignTarget(models.Model):
 
 
 class ABTest(models.Model):
+    """A/B test variant that overrides the campaign's template, subject, or sender for a slice of recipients."""
+
     campaign              = models.ForeignKey(Campaign, on_delete=models.CASCADE, related_name='ab_tests')
     variant_name          = models.CharField(max_length=50)
     template              = models.ForeignKey(Template, on_delete=models.PROTECT, related_name='ab_tests')
